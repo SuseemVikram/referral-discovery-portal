@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AvailabilityStatus {
+  Open
+  Paused
+}
+
+model Candidate {
+  id                  String             @id @default(cuid())
+  candidate_email     String             @unique @map("candidate_email")
+
+  first_name          String
+  last_name_initial   String
+
+  target_roles        String[]
+  primary_skills      String[]
+
+  location            String
+  remote_ok           Boolean             @default(false)
+  cohort              String?
+  short_profile       String
+
+  projects            Json
+  availability_status AvailabilityStatus  @default(Open)
+
+  is_active            Boolean             @default(true)
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  eoiLogs             EOILog[]
+
+  @@index([is_active])
+  @@index([availability_status])
+  @@index([location])
+  @@index([remote_ok])
+  @@index([is_active, availability_status])
+  @@index([is_active, location])
+  @@index([createdAt])
+  @@map("candidates")
+}
+
+model Referrer {
+  id             String   @id @default(cuid())
+  email          String   @unique
+
+  full_name      String?
+  company        String?
+  role           String?
+  linkedin       String?
+  contact_number String?
+  consent        Boolean  @default(false)
+
+  password_hash  String?
+  google_id      String?  @unique @map("google_id")
+  phone_number   String?  @unique @map("phone_number")
+
+  is_admin       Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  eoiLogs        EOILog[]
+
+  @@index([is_admin])
+  @@map("referrers")
+}
+
+model EOILog {
+  id                String   @id @default(cuid())
+
+  referrerId        String   @map("referrer_id")
+  candidateId       String   @map("candidate_id")
+
+  referrerEmail     String   @map("referrer_email")
+  referrerName      String   @map("referrer_name")
+  referrerCompany   String   @map("referrer_company")
+
+  candidateEmail    String   @map("candidate_email")
+  candidateName     String   @map("candidate_name")
+  candidateRoles    String[] @map("candidate_roles")
+
+  sentAt            DateTime @default(now()) @map("sent_at")
+
+  referrer          Referrer @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@index([candidateId])
+  @@index([sentAt])
+  @@map("eoi_logs")
+}
