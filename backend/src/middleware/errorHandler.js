@@ -36,11 +36,19 @@ function errorHandler(err, req, res, next) {
 
   // Custom AppError
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
+    const response = {
       error: err.message,
       requestId: requestId,
       ...(err.errors && { errors: err.errors }),
-    });
+    };
+
+    // Add rate limit info for RateLimitError
+    if (err.name === 'RateLimitError' && err.statusCode === 429) {
+      response.type = 'EOI_DAILY_LIMIT';
+      response.retryAfter = 'tomorrow'; // Daily limit resets at midnight
+    }
+
+    return res.status(err.statusCode).json(response);
   }
 
   // Default error

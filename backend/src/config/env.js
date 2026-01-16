@@ -42,6 +42,13 @@ function validateEnv() {
 // Validate on module load
 validateEnv();
 
+// Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail)
+const smtpUser = process.env.SMTP_USER;
+const fromEmail = process.env.FROM_EMAIL || smtpUser;
+if (smtpUser && fromEmail && smtpUser !== fromEmail) {
+  console.warn(`[SMTP] WARNING: FROM_EMAIL (${fromEmail}) does not match SMTP_USER (${smtpUser}). Gmail requires them to match.`);
+}
+
 module.exports = {
   database: {
     url: process.env.DATABASE_URL,
@@ -56,7 +63,7 @@ module.exports = {
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-    from: process.env.FROM_EMAIL || process.env.SMTP_USER,
+    from: fromEmail,
     admin: process.env.ADMIN_EMAIL,
   },
   app: {

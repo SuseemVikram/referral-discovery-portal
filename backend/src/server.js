@@ -2,6 +2,7 @@
 require('./config/env');
 
 const express = require('express');
+const { verifyTransporter } = require('./lib/email-transporter');
 const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
@@ -27,7 +28,14 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 1000 : 100, // More lenient in development for testing
-  message: 'Too many requests from this IP, please try again later.',
+  message: (req) => {
+    return JSON.stringify({
+      error: 'Too many requests from this IP, please try again later.',
+      type: 'API_RATE_LIMIT',
+      limit: isDevelopment ? 1000 : 100,
+      windowMinutes: 15,
+    });
+  },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
@@ -40,7 +48,14 @@ const limiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 100 : 5, // More lenient in development (100 vs 5)
-  message: 'Too many authentication attempts, please try again later.',
+  message: (req) => {
+    return JSON.stringify({
+      error: 'Too many authentication attempts, please try again later.',
+      type: 'AUTH_RATE_LIMIT',
+      limit: isDevelopment ? 100 : 5,
+      windowMinutes: 15,
+    });
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -110,6 +125,18 @@ app.use(
 app.use(errorHandler);
 
 const PORT = config.app.port;
+
+// Verify SMTP connection on startup (non-blocking)
+verifyTransporter().then((status) => {
+  if (status.success) {
+    console.log('[SMTP] Email service verified and ready');
+  } else {
+    console.error('[SMTP] Email service verification failed:', status.error);
+    console.error('[SMTP] Emails will not be sent until SMTP is properly configured');
+  }
+}).catch((error) => {
+  console.error('[SMTP] Error during verification:', error);
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

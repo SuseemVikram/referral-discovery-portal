@@ -20,14 +20,19 @@ class EmailService {
     referrerLinkedIn,
     referrerPhoneNumber,
     targetRoles,
-    primarySkills
+    primarySkills,
+    requestId = null
   ) {
     const emailTransporter = getTransporter();
 
     if (!emailTransporter) {
-      logger.warn(`[Email disabled] Would send EOI email to: ${candidateEmail}`);
+      // Use logger.error so it's always visible in production
+      logger.error(requestId, `[Email disabled] Cannot send EOI email to: ${candidateEmail} - SMTP not configured`);
       return;
     }
+
+    // Log email attempt (always visible in production)
+    logger.error(requestId, `[Email] Attempting to send EOI email to: ${candidateEmail}`);
 
     const subject = `Referral interest from ${referrerName} at ${referrerCompany}`;
 
@@ -203,10 +208,22 @@ Referral Discovery Portal
         html: html,
       });
 
-      logger.info(`Email sent successfully to ${candidateEmail}:`, info.messageId);
+      // Use logger.error for success so it's always visible in production
+      logger.error(requestId, `[Email] Successfully sent EOI email to ${candidateEmail}`, {
+        messageId: info.messageId,
+        response: info.response,
+      });
       return info;
     } catch (error) {
-      logger.error(`Failed to send email to ${candidateEmail}:`, error);
+      // Log full error details for debugging
+      logger.error(requestId, `[Email] Failed to send EOI email to ${candidateEmail}:`, {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -220,20 +237,25 @@ Referral Discovery Portal
     referrerCompany,
     referrerRole,
     candidateNames,
-    candidateIds
+    candidateIds,
+    requestId = null
   ) {
     const emailTransporter = getTransporter();
 
     if (!emailTransporter) {
-      logger.warn('[Email disabled] Would send admin notification for EOI');
+      // Use logger.error so it's always visible in production
+      logger.error(requestId, '[Email disabled] Cannot send admin notification - SMTP not configured');
       return;
     }
 
     const adminEmail = config.email.admin;
     if (!adminEmail) {
-      logger.warn('ADMIN_EMAIL not configured. Skipping admin notification.');
+      logger.error(requestId, 'ADMIN_EMAIL not configured. Skipping admin notification.');
       return;
     }
+
+    // Log email attempt (always visible in production)
+    logger.error(requestId, `[Email] Attempting to send admin notification to: ${adminEmail}`);
 
     const subject = `EOI Notification: ${referrerName} sent interest to ${candidateNames.length} candidate(s)`;
 
@@ -283,10 +305,22 @@ ${candidateList}
         html: html,
       });
 
-      logger.info('Admin notification sent successfully:', info.messageId);
+      // Use logger.error for success so it's always visible in production
+      logger.error(requestId, '[Email] Successfully sent admin notification', {
+        messageId: info.messageId,
+        response: info.response,
+      });
       return info;
     } catch (error) {
-      logger.error('Failed to send admin notification:', error);
+      // Log full error details for debugging
+      logger.error(requestId, '[Email] Failed to send admin notification:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
       throw error;
     }
   }

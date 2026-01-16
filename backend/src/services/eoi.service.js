@@ -56,7 +56,9 @@ class EOIService {
 
       // Check if adding these candidates would exceed the limit
       if (todayEOICount + candidateIds.length > config.eoi.dailyLimit) {
-        throw new RateLimitError('Daily EOI limit reached');
+        throw new RateLimitError(
+          `Daily EOI limit reached. You have sent ${todayEOICount} EOIs today. Limit: ${config.eoi.dailyLimit} per day.`
+        );
       }
 
       let sentCount = 0;
@@ -96,6 +98,7 @@ class EOIService {
     });
 
     // Send emails after transaction completes (so logs are saved even if email fails)
+    // Note: We don't have requestId here, but email service will handle null gracefully
     for (const candidate of result.candidates) {
       const candidateName = candidate.first_name;
       try {
@@ -113,12 +116,21 @@ class EOIService {
           referrer.linkedin,
           referrer.contact_number,
           emailRoles,
-          emailSkills
+          emailSkills,
+          null // requestId not available in service layer
         );
       } catch (error) {
+        // Log full error details
         logger.error(
           `Email sending failed for ${candidate.candidate_email}, but EOI log was created`,
-          error
+          {
+            error: error.message,
+            code: error.code,
+            response: error.response,
+            responseCode: error.responseCode,
+            candidateEmail: candidate.candidate_email,
+            candidateId: candidate.id,
+          }
         );
       }
     }
@@ -131,10 +143,16 @@ class EOIService {
         referrer.company,
         referrer.role,
         result.candidateNames,
-        result.processedCandidateIds
+        result.processedCandidateIds,
+        null // requestId not available in service layer
       );
     } catch (error) {
-      logger.error('Admin notification failed, but EOI was sent:', error);
+      logger.error('Admin notification failed, but EOI was sent:', {
+        error: error.message,
+        code: error.code,
+        response: error.response,
+        responseCode: error.responseCode,
+      });
     }
 
     return {
