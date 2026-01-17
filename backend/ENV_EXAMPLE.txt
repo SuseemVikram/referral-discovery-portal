@@ -14,12 +14,20 @@ NODE_ENV=development
 # Frontend URL (Required in production for CORS)
 FRONTEND_URL=http://localhost:3000
 
-# SMTP Email Configuration
+# Email Configuration
+# Option 1: SendGrid API (Recommended for Railway/cloud hosting)
+# Uses HTTPS port 443 - works on platforms that block SMTP ports
+SENDGRID_API_KEY=SG.your-sendgrid-api-key-here
+
+# Option 2: SMTP (Works for local development, Gmail, etc.)
+# If SENDGRID_API_KEY is set, SMTP settings are ignored
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
+
+# Common settings (used by both methods)
 FROM_EMAIL="Referral Portal <your-email@gmail.com>"
 
 # Admin Email (Optional - for receiving EOI notifications)
@@ -30,3 +38,10 @@ EOI_DAILY_LIMIT=20
 
 # Redis Configuration (Optional - for production OTP and rate limiting)
 # REDIS_URL=redis://localhost:6379
+
+# Note: Email Configuration Priority
+# 1. If SENDGRID_API_KEY is set → Uses SendGrid API (works on Railway/cloud)
+# 2. Otherwise → Uses SMTP configuration (works locally with Gmail)
+# 
+# For Local Development: Keep Gmail SMTP settings
+# For Railway/Cloud: Set SENDGRID_API_KEY (removes need for SMTP_* variables)
