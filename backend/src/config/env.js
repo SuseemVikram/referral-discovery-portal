@@ -87,8 +87,9 @@ function extractEmail(emailString) {
   return emailMatch ? emailMatch[1] : emailString;
 }
 
-// Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail)
+// Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail only)
 const smtpUser = process.env.SMTP_USER;
+const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
 const fromEmailRaw = process.env.FROM_EMAIL || smtpUser;
 
 // Extract the email part for comparison with SMTP_USER
@@ -98,7 +99,9 @@ const fromEmail = extractEmail(fromEmailRaw);
 // But ensure the email part matches SMTP_USER for Gmail compatibility
 const fromEmailForNodemailer = fromEmailRaw;
 
-if (smtpUser && fromEmail && smtpUser !== fromEmail) {
+// Only warn for Gmail - SendGrid and other providers don't require this
+const isGmail = smtpHost.includes('gmail.com');
+if (isGmail && smtpUser && fromEmail && smtpUser !== fromEmail) {
   console.warn(`[SMTP] WARNING: FROM_EMAIL email part (${fromEmail}) does not match SMTP_USER (${smtpUser}). Gmail requires them to match.`);
 }
 

@@ -79,11 +79,22 @@ async function verifyTransporter() {
     
     // Log helpful message for common issues
     if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+      const smtpHost = config.email.host || 'smtp.gmail.com';
+      const smtpPort = config.email.port || 587;
+      const isSendGrid = smtpHost.includes('sendgrid');
+      
       logger.error('[SMTP] Connection timeout - This may indicate:');
       logger.error('[SMTP] 1. Railway blocking outbound SMTP connections (port 587)');
-      logger.error('[SMTP] 2. Gmail blocking Railway IP addresses');
+      if (isSendGrid) {
+        logger.error('[SMTP] 2. Try using SendGrid port 2525 instead of 587');
+        logger.error('[SMTP]    Set SMTP_PORT=2525 in Railway environment variables');
+      } else {
+        logger.error('[SMTP] 2. Gmail blocking Railway IP addresses');
+        logger.error('[SMTP]    Consider switching to SendGrid (see RAILWAY_SMTP_FIX.md)');
+      }
       logger.error('[SMTP] 3. Network/firewall issues');
       logger.error('[SMTP] 4. Incorrect SMTP_HOST or SMTP_PORT');
+      logger.error(`[SMTP]    Current: ${smtpHost}:${smtpPort}`);
       logger.error('[SMTP] Emails may still work - verification is just a connectivity test');
     }
     

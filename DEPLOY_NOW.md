@@ -77,4 +77,18 @@ curl https://your-backend.railway.app/health
 
 ---
 
+## 🚨 If You See SMTP Timeout Errors
+
+**Railway blocks SMTP port 587.** Switch to SendGrid (5 min):
+
+1. See **[RAILWAY_SMTP_FIX.md](./RAILWAY_SMTP_FIX.md)** for step-by-step fix
+2. Or use SendGrid instead of Gmail:
+   ```
+   SMTP_HOST=smtp.sendgrid.net
+   SMTP_USER=apikey
+   SMTP_PASS=<sendgrid-api-key>
+   ```
+
+---
+
 **Need detailed guide?** See `QUICK_DEPLOY_GUIDE.md`
