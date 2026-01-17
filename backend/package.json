@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.12",
+    "@sendgrid/mail": "^8.1.4",
     "prisma": "^5.22.0",
     "zod": "^4.3.5"
   },

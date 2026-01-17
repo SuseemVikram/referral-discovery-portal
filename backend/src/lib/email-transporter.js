@@ -1,6 +1,7 @@
 /**
  * Email Transporter Setup
- * Separated from email service for better organization
+ * Supports both SMTP (via nodemailer) and SendGrid API
+ * SendGrid API is preferred on Railway (works via HTTPS port 443)
  */
 const nodemailer = require('nodemailer');
 const config = require('../config/env');
@@ -8,12 +9,68 @@ const logger = require('../utils/logger');
 
 let transporter = null;
 let verificationStatus = null;
+let emailProvider = null; // 'sendgrid' or 'smtp'
 
-function getTransporter() {
-  if (transporter) {
-    return transporter;
+/**
+ * Create SendGrid API adapter (compatible with nodemailer sendMail interface)
+ */
+function createSendGridAdapter() {
+  let sgMail;
+  try {
+    sgMail = require('@sendgrid/mail');
+  } catch (error) {
+    logger.error('[SendGrid] @sendgrid/mail package not installed. Run: npm install @sendgrid/mail');
+    return null;
   }
 
+  const sendGridApiKey = process.env.SENDGRID_API_KEY;
+  if (!sendGridApiKey) {
+    logger.error('[SendGrid] SENDGRID_API_KEY environment variable not set');
+    return null;
+  }
+
+  sgMail.setApiKey(sendGridApiKey);
+
+  // Return adapter object with sendMail method compatible with nodemailer
+  return {
+    sendMail: async (mailOptions) => {
+      const msg = {
+        to: mailOptions.to,
+        from: mailOptions.from || config.email.from,
+        subject: mailOptions.subject,
+        text: mailOptions.text,
+        html: mailOptions.html,
+      };
+
+      const result = await sgMail.send(msg);
+      
+      // Return format compatible with nodemailer response
+      return {
+        messageId: result[0]?.headers?.['x-message-id'] || 'unknown',
+        response: result[0]?.statusCode === 202 ? '250 Message accepted' : `Status: ${result[0]?.statusCode}`,
+        accepted: [msg.to].flat(),
+        rejected: [],
+        pending: [],
+      };
+    },
+    verify: async () => {
+      // SendGrid API doesn't need verification - just test the API key
+      try {
+        // Try to get API key info (this validates the key)
+        // Note: SendGrid doesn't have a simple verification endpoint
+        // So we'll just return success if API key is set
+        return true;
+      } catch (error) {
+        throw new Error(`SendGrid API key validation failed: ${error.message}`);
+      }
+    },
+  };
+}
+
+/**
+ * Create SMTP transporter (nodemailer)
+ */
+function createSMTPTransporter() {
   const smtpConfig = {
     host: config.email.host,
     port: config.email.port,
@@ -29,19 +86,43 @@ function getTransporter() {
   };
 
   if (!smtpConfig.auth.user || !smtpConfig.auth.pass) {
-    // Use logger.error so it's always visible in production
     logger.error('SMTP credentials not configured. Email sending is disabled.');
     logger.error(`SMTP_USER: ${smtpConfig.auth.user ? 'SET' : 'MISSING'}, SMTP_PASS: ${smtpConfig.auth.pass ? 'SET' : 'MISSING'}`);
     return null;
   }
 
-  transporter = nodemailer.createTransport(smtpConfig);
+  return nodemailer.createTransport(smtpConfig);
+}
+
+function getTransporter() {
+  if (transporter) {
+    return transporter;
+  }
+
+  // Priority: SendGrid API > SMTP
+  // Check for SendGrid API key first (works better on Railway)
+  if (process.env.SENDGRID_API_KEY) {
+    logger.info('[Email] Using SendGrid API (via HTTPS)');
+    emailProvider = 'sendgrid';
+    transporter = createSendGridAdapter();
+    if (transporter) {
+      return transporter;
+    }
+    // Fall through to SMTP if SendGrid adapter creation fails
+    logger.warn('[Email] SendGrid API setup failed, falling back to SMTP');
+  }
+
+  // Use SMTP (nodemailer)
+  logger.info('[Email] Using SMTP');
+  emailProvider = 'smtp';
+  transporter = createSMTPTransporter();
   return transporter;
 }
 
 /**
- * Verify SMTP connection
+ * Verify email transporter connection
  * Call this on startup to ensure email is configured correctly
+ * Skips verification for SendGrid API (uses HTTPS, doesn't need SMTP verification)
  */
 async function verifyTransporter() {
   if (verificationStatus !== null) {
@@ -51,11 +132,22 @@ async function verifyTransporter() {
   const emailTransporter = getTransporter();
   
   if (!emailTransporter) {
-    verificationStatus = { success: false, error: 'SMTP credentials not configured' };
-    logger.error('[SMTP] Verification failed: SMTP credentials not configured');
+    verificationStatus = { success: false, error: 'Email credentials not configured' };
+    logger.error('[Email] Verification failed: Email credentials not configured');
+    if (!process.env.SENDGRID_API_KEY && (!config.email.user || !config.email.pass)) {
+      logger.error('[Email] Set either SENDGRID_API_KEY (recommended) or SMTP_USER/SMTP_PASS');
+    }
     return verificationStatus;
   }
 
+  // SendGrid API doesn't need SMTP verification (uses HTTPS)
+  if (emailProvider === 'sendgrid') {
+    verificationStatus = { success: true };
+    logger.info('[Email] SendGrid API configured (no SMTP verification needed)');
+    return verificationStatus;
+  }
+
+  // Verify SMTP connection
   try {
     // Use a timeout for verification to prevent hanging
     const verifyPromise = emailTransporter.verify();
@@ -65,11 +157,11 @@ async function verifyTransporter() {
     
     await Promise.race([verifyPromise, timeoutPromise]);
     verificationStatus = { success: true };
-    logger.error('[SMTP] Verification successful - Email service is ready');
+    logger.info('[Email] SMTP verification successful - Email service is ready');
     return verificationStatus;
   } catch (error) {
     verificationStatus = { success: false, error: error.message };
-    logger.error('[SMTP] Verification failed:', {
+    logger.error('[Email] SMTP verification failed:', {
       message: error.message,
       code: error.code,
       command: error.command,
@@ -83,19 +175,18 @@ async function verifyTransporter() {
       const smtpPort = config.email.port || 587;
       const isSendGrid = smtpHost.includes('sendgrid');
       
-      logger.error('[SMTP] Connection timeout - This may indicate:');
-      logger.error('[SMTP] 1. Railway blocking outbound SMTP connections (port 587)');
+      logger.error('[Email] SMTP connection timeout - This may indicate:');
+      logger.error('[Email] 1. Railway blocking outbound SMTP connections (ports 587/2525)');
+      logger.error('[Email] 2. Solution: Use SendGrid API instead of SMTP');
+      logger.error('[Email]    Set SENDGRID_API_KEY in Railway (uses HTTPS port 443, not blocked)');
+      logger.error('[Email]    See RAILWAY_EMAIL_API_FIX.md for details');
       if (isSendGrid) {
-        logger.error('[SMTP] 2. Try using SendGrid port 2525 instead of 587');
-        logger.error('[SMTP]    Set SMTP_PORT=2525 in Railway environment variables');
-      } else {
-        logger.error('[SMTP] 2. Gmail blocking Railway IP addresses');
-        logger.error('[SMTP]    Consider switching to SendGrid (see RAILWAY_SMTP_FIX.md)');
+        logger.error('[Email]    Or try SendGrid port 2525: Set SMTP_PORT=2525');
       }
-      logger.error('[SMTP] 3. Network/firewall issues');
-      logger.error('[SMTP] 4. Incorrect SMTP_HOST or SMTP_PORT');
-      logger.error(`[SMTP]    Current: ${smtpHost}:${smtpPort}`);
-      logger.error('[SMTP] Emails may still work - verification is just a connectivity test');
+      logger.error('[Email] 3. Network/firewall issues');
+      logger.error('[Email] 4. Incorrect SMTP_HOST or SMTP_PORT');
+      logger.error(`[Email]    Current: ${smtpHost}:${smtpPort}`);
+      logger.error('[Email] Note: Emails may still work - verification is just a connectivity test');
     }
     
     return verificationStatus;

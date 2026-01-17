@@ -154,10 +154,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // The error message will indicate the status code
         const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
         if (isAuthError) {
-          localStorage.removeItem(TOKEN_KEY);
-          setIsLoggedIn(false);
-          setUser(null);
-          setIsAdmin(false);
+        localStorage.removeItem(TOKEN_KEY);
+        setIsLoggedIn(false);
+        setUser(null);
+        setIsAdmin(false);
         }
       });
   }, [router]);
