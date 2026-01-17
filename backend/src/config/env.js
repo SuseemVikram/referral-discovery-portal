@@ -45,9 +45,14 @@ validateEnv();
 // Extract email from FROM_EMAIL if it's in format "Name <email@example.com>"
 function extractEmail(emailString) {
   if (!emailString) return emailString;
-  // Match email in format "Name <email@example.com>" or just "email@example.com"
-  const emailMatch = emailString.match(/<(.+?)>|(.+@.+\..+)/);
-  return emailMatch ? (emailMatch[1] || emailMatch[2]) : emailString;
+  // First try to match email in angle brackets: "Name <email@example.com>"
+  const bracketMatch = emailString.match(/<(.+?)>/);
+  if (bracketMatch) {
+    return bracketMatch[1].trim();
+  }
+  // If no brackets, try to match standalone email: "email@example.com"
+  const emailMatch = emailString.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  return emailMatch ? emailMatch[1] : emailString;
 }
 
 // Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail)
