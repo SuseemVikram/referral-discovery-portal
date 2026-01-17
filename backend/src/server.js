@@ -21,13 +21,28 @@ const app = express();
 
 // Trust proxy - Required when behind a proxy (Railway, Render, etc.)
 // This allows Express to correctly identify the client IP from X-Forwarded-For headers
-app.set('trust proxy', true);
+// Set to 1 to trust only the first proxy (Railway)
+app.set('trust proxy', 1);
 
 // Rate limiting - More lenient in development, stricter in production
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Custom key generator that uses X-Forwarded-For header safely
+const keyGenerator = (req) => {
+  // Use X-Forwarded-For header if available (from Railway proxy)
+  // Take the first IP (original client) to prevent spoofing
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    const ips = forwarded.split(',').map(ip => ip.trim());
+    return ips[0] || req.ip;
+  }
+  return req.ip;
+};
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 1000 : 100, // More lenient in development for testing
+  keyGenerator: keyGenerator,
   message: (req) => {
     return JSON.stringify({
       error: 'Too many requests from this IP, please try again later.',
@@ -48,6 +63,7 @@ const limiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 100 : 5, // More lenient in development (100 vs 5)
+  keyGenerator: keyGenerator,
   message: (req) => {
     return JSON.stringify({
       error: 'Too many authentication attempts, please try again later.',

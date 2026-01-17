@@ -42,11 +42,21 @@ function validateEnv() {
 // Validate on module load
 validateEnv();
 
+// Extract email from FROM_EMAIL if it's in format "Name <email@example.com>"
+function extractEmail(emailString) {
+  if (!emailString) return emailString;
+  // Match email in format "Name <email@example.com>" or just "email@example.com"
+  const emailMatch = emailString.match(/<(.+?)>|(.+@.+\..+)/);
+  return emailMatch ? (emailMatch[1] || emailMatch[2]) : emailString;
+}
+
 // Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail)
 const smtpUser = process.env.SMTP_USER;
-const fromEmail = process.env.FROM_EMAIL || smtpUser;
+const fromEmailRaw = process.env.FROM_EMAIL || smtpUser;
+const fromEmail = extractEmail(fromEmailRaw);
+
 if (smtpUser && fromEmail && smtpUser !== fromEmail) {
-  console.warn(`[SMTP] WARNING: FROM_EMAIL (${fromEmail}) does not match SMTP_USER (${smtpUser}). Gmail requires them to match.`);
+  console.warn(`[SMTP] WARNING: FROM_EMAIL email part (${fromEmail}) does not match SMTP_USER (${smtpUser}). Gmail requires them to match.`);
 }
 
 module.exports = {

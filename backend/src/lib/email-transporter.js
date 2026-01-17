@@ -22,6 +22,10 @@ function getTransporter() {
       user: config.email.user,
       pass: config.email.pass,
     },
+    // Add connection timeout to prevent hanging
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
   };
 
   if (!smtpConfig.auth.user || !smtpConfig.auth.pass) {
@@ -53,7 +57,13 @@ async function verifyTransporter() {
   }
 
   try {
-    await emailTransporter.verify();
+    // Use a timeout for verification to prevent hanging
+    const verifyPromise = emailTransporter.verify();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('SMTP verification timeout after 10 seconds')), 10000);
+    });
+    
+    await Promise.race([verifyPromise, timeoutPromise]);
     verificationStatus = { success: true };
     logger.error('[SMTP] Verification successful - Email service is ready');
     return verificationStatus;
@@ -66,6 +76,17 @@ async function verifyTransporter() {
       response: error.response,
       responseCode: error.responseCode,
     });
+    
+    // Log helpful message for common issues
+    if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+      logger.error('[SMTP] Connection timeout - This may indicate:');
+      logger.error('[SMTP] 1. Railway blocking outbound SMTP connections (port 587)');
+      logger.error('[SMTP] 2. Gmail blocking Railway IP addresses');
+      logger.error('[SMTP] 3. Network/firewall issues');
+      logger.error('[SMTP] 4. Incorrect SMTP_HOST or SMTP_PORT');
+      logger.error('[SMTP] Emails may still work - verification is just a connectivity test');
+    }
+    
     return verificationStatus;
   }
 }
