@@ -6,6 +6,7 @@ const { verifyTransporter } = require('./lib/email-transporter');
 const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const candidatesRouter = require('./routes/candidates.routes');
 const authRouter = require('./routes/auth.routes');
 const eoiRouter = require('./routes/eoi.routes');
@@ -28,15 +29,19 @@ app.set('trust proxy', 1);
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Custom key generator that uses X-Forwarded-For header safely
+// Uses ipKeyGenerator helper for proper IPv6 handling
 const keyGenerator = (req) => {
   // Use X-Forwarded-For header if available (from Railway proxy)
   // Take the first IP (original client) to prevent spoofing
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
     const ips = forwarded.split(',').map(ip => ip.trim());
-    return ips[0] || req.ip;
+    const clientIp = ips[0] || req.ip;
+    // Use ipKeyGenerator helper to properly handle IPv6 addresses
+    return ipKeyGenerator(clientIp);
   }
-  return req.ip;
+  // Use ipKeyGenerator helper for proper IPv6 handling
+  return ipKeyGenerator(req.ip);
 };
 
 const limiter = rateLimit({

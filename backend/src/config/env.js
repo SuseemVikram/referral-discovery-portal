@@ -53,7 +53,13 @@ function extractEmail(emailString) {
 // Warn if FROM_EMAIL doesn't match SMTP_USER (required for Gmail)
 const smtpUser = process.env.SMTP_USER;
 const fromEmailRaw = process.env.FROM_EMAIL || smtpUser;
+
+// Extract the email part for comparison with SMTP_USER
 const fromEmail = extractEmail(fromEmailRaw);
+
+// Use the full FROM_EMAIL (with display name if present) for nodemailer
+// But ensure the email part matches SMTP_USER for Gmail compatibility
+const fromEmailForNodemailer = fromEmailRaw;
 
 if (smtpUser && fromEmail && smtpUser !== fromEmail) {
   console.warn(`[SMTP] WARNING: FROM_EMAIL email part (${fromEmail}) does not match SMTP_USER (${smtpUser}). Gmail requires them to match.`);
@@ -73,7 +79,7 @@ module.exports = {
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-    from: fromEmail,
+    from: fromEmailForNodemailer, // Use full FROM_EMAIL (can include display name)
     admin: process.env.ADMIN_EMAIL,
   },
   app: {
