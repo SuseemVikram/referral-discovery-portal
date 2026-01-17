@@ -3,14 +3,16 @@
  */
 const adminCandidatesService = require('../../services/admin/candidates.service');
 const { visibilitySchema, availabilitySchema } = require('../../validators/admin.validator');
+const { sanitizeQueryParam } = require('../../utils/sanitize');
 
 class AdminCandidatesController {
   async getAllCandidates(req, res, next) {
     try {
+      // Sanitize query parameters
       const filters = {
-        email: req.query.email,
-        roles: req.query.roles,
-        skills: req.query.skills,
+        email: req.query.email ? sanitizeQueryParam(req.query.email) : undefined,
+        roles: req.query.roles ? sanitizeQueryParam(req.query.roles) : undefined,
+        skills: req.query.skills ? sanitizeQueryParam(req.query.skills) : undefined,
       };
       const candidates = await adminCandidatesService.getAllCandidates(filters);
       res.json({ candidates });

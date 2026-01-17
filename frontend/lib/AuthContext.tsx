@@ -88,12 +88,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const userData = await response.json();
             setUser(userData);
             setIsAdmin(userData.is_admin || false);
-          } else {
-            // Token invalid, clear it
+          } else if (response.status === 401) {
+            // Token invalid or expired, clear it and session
             localStorage.removeItem(TOKEN_KEY);
             setIsLoggedIn(false);
             setIsAdmin(false);
             setUser(null);
+            // If it's a NextAuth token issue, sign out from NextAuth too
+            if (session && (session as any).token === token) {
+              nextAuthSignOut({ redirect: false });
+            }
+          } else {
+            // Other errors (network, 500, etc.) - don't clear token
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Failed to fetch user (non-401 error):', response.status);
+            }
           }
         } catch (error) {
           // Silently handle auth errors in production
@@ -136,12 +145,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Log auth errors for debugging
         if (process.env.NODE_ENV === 'development') {
           console.error('Failed to fetch user after login:', error);
+          // Log token for debugging (first 20 chars only)
+          if (token) {
+            console.error('Token used (first 20 chars):', token.substring(0, 20) + '...');
+          }
         }
-        // Clear invalid token
-        localStorage.removeItem(TOKEN_KEY);
-        setIsLoggedIn(false);
-        setUser(null);
-        setIsAdmin(false);
+        // Only clear token if it's an auth error (401), not network errors
+        // The error message will indicate the status code
+        const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
+        if (isAuthError) {
+          localStorage.removeItem(TOKEN_KEY);
+          setIsLoggedIn(false);
+          setUser(null);
+          setIsAdmin(false);
+        }
       });
   }, [router]);
 

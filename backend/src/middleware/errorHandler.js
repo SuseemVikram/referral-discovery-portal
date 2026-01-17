@@ -27,9 +27,18 @@ function errorHandler(err, req, res, next) {
 
   // Validation errors (Zod)
   if (err.name === 'ZodError' || err.errors) {
+    // In production, sanitize error details to prevent information leakage
+    const errors = err.errors || err.issues;
+    const sanitizedErrors = process.env.NODE_ENV === 'production'
+      ? errors.map((e) => ({
+          path: e.path || e.field || 'unknown',
+          message: e.message || 'Validation failed',
+        }))
+      : errors;
+
     return res.status(400).json({
       error: 'Validation error',
-      errors: err.errors || err.issues,
+      errors: sanitizedErrors,
       requestId: requestId,
     });
   }

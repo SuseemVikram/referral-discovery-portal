@@ -5,6 +5,7 @@ const express = require('express');
 const { verifyTransporter } = require('./lib/email-transporter');
 const cors = require('cors');
 const compression = require('compression');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { ipKeyGenerator } = require('express-rate-limit');
 const candidatesRouter = require('./routes/candidates.routes');
@@ -16,6 +17,7 @@ const requireAdmin = require('./middleware/requireAdmin');
 const errorHandler = require('./middleware/errorHandler');
 const performanceMiddleware = require('./middleware/performance');
 const requestIdMiddleware = require('./middleware/requestId');
+const logger = require('./utils/logger');
 const config = require('./config/env');
 
 const app = express();
@@ -24,6 +26,19 @@ const app = express();
 // This allows Express to correctly identify the client IP from X-Forwarded-For headers
 // Set to 1 to trust only the first proxy (Railway)
 app.set('trust proxy', 1);
+
+// Security headers (must be before other middleware)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for email templates
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow iframe embedding if needed
+}));
 
 // Rate limiting - More lenient in development, stricter in production
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -110,13 +125,36 @@ app.use(performanceMiddleware); // Track performance
 app.use(compression()); // Compress responses
 app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
 
-// Health check (no caching needed)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+// Health check endpoint with detailed status
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  };
+
+  // Check database connectivity
+  try {
+    const prisma = require('./lib/prisma');
+    await prisma.$queryRaw`SELECT 1`;
+    health.database = 'connected';
+  } catch (error) {
+    health.database = 'disconnected';
+    health.status = 'degraded';
+  }
+
+  // Check email service status (non-blocking)
+  const { getTransporter } = require('./lib/email-transporter');
+  const transporter = getTransporter();
+  health.email = transporter ? 'configured' : 'not_configured';
+
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Development-only endpoint to reset rate limits (for testing)
-if (isDevelopment) {
+// Double-check: ensure NODE_ENV is 'development' (not just truthy)
+if (isDevelopment && process.env.NODE_ENV === 'development') {
   app.post('/dev/reset-rate-limits', (req, res) => {
     // Reset rate limit stores by creating new instances
     // Note: This only works if using default in-memory store
@@ -150,16 +188,16 @@ const PORT = config.app.port;
 // Verify SMTP connection on startup (non-blocking)
 verifyTransporter().then((status) => {
   if (status.success) {
-    console.log('[SMTP] Email service verified and ready');
+    logger.info('[SMTP] Email service verified and ready');
   } else {
-    console.error('[SMTP] Email service verification failed:', status.error);
-    console.error('[SMTP] Emails will not be sent until SMTP is properly configured');
+    logger.error('[SMTP] Email service verification failed:', status.error);
+    logger.error('[SMTP] Emails will not be sent until SMTP is properly configured');
   }
 }).catch((error) => {
-  console.error('[SMTP] Error during verification:', error);
+  logger.error('[SMTP] Error during verification:', error);
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
 

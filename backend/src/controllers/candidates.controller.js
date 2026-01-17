@@ -6,6 +6,7 @@ const candidateService = require('../services/candidate.service');
 const { ValidationError } = require('../utils/errors');
 const { candidateFiltersSchema } = require('../validators/candidate.validator');
 const cache = require('../lib/redis-cache');
+const logger = require('../utils/logger');
 
 class CandidatesController {
   /**
@@ -46,7 +47,7 @@ class CandidatesController {
 
       // Log slow queries (> 500ms) in development or if very slow (> 1000ms)
       if (queryTime > 1000 || (process.env.NODE_ENV === 'development' && queryTime > 500)) {
-        console.warn(`Slow query detected: ${queryTime}ms`, { filters, pagination });
+        logger.warn(req.id || 'unknown', `Slow query detected: ${queryTime}ms`, { filters, pagination });
       }
 
       // Cache for 60 seconds (increased for better performance)

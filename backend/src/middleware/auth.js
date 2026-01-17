@@ -18,6 +18,15 @@ function authenticateToken(req, res, next) {
     };
     next();
   } catch (error) {
+    // Log token validation error for debugging (development only)
+    if (process.env.NODE_ENV === 'development') {
+      const logger = require('../utils/logger');
+      logger.debug(req.id || 'unknown', 'Token validation failed:', {
+        error: error.message,
+        tokenPrefix: token.substring(0, 20) + '...',
+        // Don't log full token for security
+      });
+    }
     return next(new UnauthorizedError('Invalid or expired token'));
   }
 }

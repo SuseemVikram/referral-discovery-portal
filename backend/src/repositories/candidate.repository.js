@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { NotFoundError } = require('../utils/errors');
+const { sanitizeQueryParam, sanitizeStringArray, sanitizeString } = require('../utils/sanitize');
 
 class CandidateRepository {
   /**
@@ -58,20 +59,27 @@ class CandidateRepository {
     }
 
     if (roles) {
-      const rolesArray = roles.split(',').map((r) => r.trim());
-      where.target_roles = { hasSome: rolesArray };
+      const rolesArray = roles.split(',').map((r) => sanitizeString(r.trim())).filter(Boolean);
+      if (rolesArray.length > 0) {
+        where.target_roles = { hasSome: rolesArray };
+      }
     }
 
     if (skills) {
-      const skillsArray = skills.split(',').map((s) => s.trim());
-      where.primary_skills = { hasSome: skillsArray };
+      const skillsArray = skills.split(',').map((s) => sanitizeString(s.trim())).filter(Boolean);
+      if (skillsArray.length > 0) {
+        where.primary_skills = { hasSome: skillsArray };
+      }
     }
 
     if (location) {
-      where.location = {
-        contains: location,
-        mode: 'insensitive',
-      };
+      const sanitizedLocation = sanitizeQueryParam(location);
+      if (sanitizedLocation) {
+        where.location = {
+          contains: sanitizedLocation,
+          mode: 'insensitive',
+        };
+      }
     }
 
     if (remote_ok !== undefined) {
@@ -150,24 +158,38 @@ class CandidateRepository {
     const { email, roles, skills } = filters;
     const where = {};
 
+    // Sanitize email query parameter
     if (email && typeof email === 'string' && email.trim()) {
-      where.candidate_email = {
-        contains: email.trim(),
-        mode: 'insensitive',
-      };
-    }
-
-    if (roles && typeof roles === 'string' && roles.trim()) {
-      const roleList = roles.split(',').map((r) => r.trim()).filter(Boolean);
-      if (roleList.length > 0) {
-        where.target_roles = { hasSome: roleList };
+      const sanitizedEmail = sanitizeQueryParam(email);
+      if (sanitizedEmail) {
+        where.candidate_email = {
+          contains: sanitizedEmail,
+          mode: 'insensitive',
+        };
       }
     }
 
+    // Sanitize roles query parameter
+    if (roles && typeof roles === 'string' && roles.trim()) {
+      const sanitizedRoles = sanitizeQueryParam(roles);
+      if (sanitizedRoles) {
+        const roleList = sanitizedRoles.split(',').map((r) => r.trim()).filter(Boolean);
+        const sanitizedRoleList = sanitizeStringArray(roleList);
+        if (sanitizedRoleList.length > 0) {
+          where.target_roles = { hasSome: sanitizedRoleList };
+        }
+      }
+    }
+
+    // Sanitize skills query parameter
     if (skills && typeof skills === 'string' && skills.trim()) {
-      const skillList = skills.split(',').map((s) => s.trim()).filter(Boolean);
-      if (skillList.length > 0) {
-        where.primary_skills = { hasSome: skillList };
+      const sanitizedSkills = sanitizeQueryParam(skills);
+      if (sanitizedSkills) {
+        const skillList = sanitizedSkills.split(',').map((s) => s.trim()).filter(Boolean);
+        const sanitizedSkillList = sanitizeStringArray(skillList);
+        if (sanitizedSkillList.length > 0) {
+          where.primary_skills = { hasSome: sanitizedSkillList };
+        }
       }
     }
 

@@ -2,7 +2,15 @@
 
 A referral discovery platform where referrers can browse candidate profiles and send Expressions of Interest (EOI).
 
-## 🚀 Quick Start
+## 🚀 Quick Deploy (Live in 5 minutes)
+
+**Want to go live right now?** See **[DEPLOY_NOW.md](./DEPLOY_NOW.md)** for fastest deployment.
+
+**For detailed guide:** See **[QUICK_DEPLOY_GUIDE.md](./QUICK_DEPLOY_GUIDE.md)**
+
+---
+
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
 - Node.js 18+
@@ -58,9 +66,9 @@ See `frontend/.env.example` for required variables.
 
 ## 📚 Documentation
 
-- **Full Technical Documentation:** See `HANDOVER_DOCUMENTATION.md`
-- **SMTP Setup Guide:** See `SMTP_SETUP_GUIDE.md`
-- **Deployment Guide:** See `DEPLOYMENT_GUIDE.md`
+- **Production Ready Checklist:** See `PRODUCTION_READY_CHECKLIST.md`
+- **Production Deployment Guide:** See `docs/PRODUCTION_DEPLOYMENT.md`
+- **SMTP Setup Guide:** See `docs/SMTP_SETUP_GUIDE.md`
 
 ## 🛠 Tech Stack
 

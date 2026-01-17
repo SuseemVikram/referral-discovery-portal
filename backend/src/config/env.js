@@ -37,6 +37,38 @@ function validateEnv() {
       process.env[key] = defaultValue;
     }
   });
+
+  // Validate numeric environment variables
+  const numericEnvVars = {
+    SMTP_PORT: process.env.SMTP_PORT,
+    PORT: process.env.PORT,
+    EOI_DAILY_LIMIT: process.env.EOI_DAILY_LIMIT,
+  };
+
+  Object.entries(numericEnvVars).forEach(([key, value]) => {
+    if (value && isNaN(Number(value))) {
+      throw new Error(`Environment variable ${key} must be a valid number. Got: ${value}`);
+    }
+    // Validate ranges
+    if (key === 'SMTP_PORT' && value) {
+      const port = Number(value);
+      if (port < 1 || port > 65535) {
+        throw new Error(`SMTP_PORT must be between 1 and 65535. Got: ${port}`);
+      }
+    }
+    if (key === 'PORT' && value) {
+      const port = Number(value);
+      if (port < 1 || port > 65535) {
+        throw new Error(`PORT must be between 1 and 65535. Got: ${port}`);
+      }
+    }
+    if (key === 'EOI_DAILY_LIMIT' && value) {
+      const limit = Number(value);
+      if (limit < 1 || limit > 1000) {
+        throw new Error(`EOI_DAILY_LIMIT must be between 1 and 1000. Got: ${limit}`);
+      }
+    }
+  });
 }
 
 // Validate on module load

@@ -70,13 +70,14 @@ class EOIService {
         const candidateName = candidate.first_name;
 
         // Create EOI log entry within transaction (before sending email)
+        // Use foreign keys directly (referrerId, candidateId) - Prisma handles relations automatically
         await tx.eOILog.create({
           data: {
             referrerId: referrer.id,
             candidateId: candidate.id,
             referrerEmail: referrer.email,
-            referrerName: referrer.full_name,
-            referrerCompany: referrer.company,
+            referrerName: referrer.full_name || '',
+            referrerCompany: referrer.company || '',
             candidateEmail: candidate.candidate_email,
             candidateName: candidateName,
             candidateRoles: candidate.target_roles,
