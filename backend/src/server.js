@@ -79,7 +79,7 @@ const limiter = rateLimit({
   },
 });
 
-// Stricter rate limiting for auth endpoints
+// Stricter rate limiting for sensitive auth endpoints (login, signup, etc.)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevelopment ? 100 : 5, // More lenient in development (100 vs 5)
@@ -90,6 +90,28 @@ const authLimiter = rateLimit({
       type: 'AUTH_RATE_LIMIT',
       limit: isDevelopment ? 100 : 5,
       windowMinutes: 15,
+    });
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for GET /auth/me (user profile fetch)
+    // This endpoint is called frequently on page loads and should not be strictly rate limited
+    return req.method === 'GET' && req.path === '/me';
+  },
+});
+
+// More lenient rate limiting for /auth/me (GET only - user profile fetch)
+const authProfileLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: isDevelopment ? 60 : 30, // 30 requests per minute in production (more lenient)
+  keyGenerator: keyGenerator,
+  message: (req) => {
+    return JSON.stringify({
+      error: 'Too many requests, please try again later.',
+      type: 'RATE_LIMIT',
+      limit: isDevelopment ? 60 : 30,
+      windowMinutes: 1,
     });
   },
   standardHeaders: true,
@@ -171,7 +193,18 @@ app.set('etag', true);
 
 // Routes
 app.use('/api/candidates', candidatesRouter);
-app.use('/auth', authLimiter, authRouter); // Stricter rate limiting for auth
+
+// Auth routes with differentiated rate limiting
+// /auth/me (GET) gets lenient rate limiting, other auth endpoints get strict rate limiting
+app.use('/auth', (req, res, next) => {
+  // Apply lenient rate limiting for GET /auth/me
+  if (req.method === 'GET' && req.path === '/me') {
+    return authProfileLimiter(req, res, next);
+  }
+  // Apply strict rate limiting for all other auth endpoints (login, signup, etc.)
+  return authLimiter(req, res, next);
+}, authRouter);
+
 app.use('/api/eoi', eoiRouter);
 app.use(
   '/api/admin',
