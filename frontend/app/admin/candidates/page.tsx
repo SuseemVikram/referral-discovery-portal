@@ -156,9 +156,9 @@ export default function AdminCandidatesPage() {
         <div className="page-header">
           <h1 className="page-title">Candidate Management</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-500">
-              {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}
-            </span>
+          <span className="text-sm text-slate-500">
+            {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}
+          </span>
             {candidates.length > 0 && (
               <button
                 onClick={handleDeleteAll}
