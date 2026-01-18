@@ -14,6 +14,15 @@ class AdminReferrersController {
     }
   }
 
+  async getReferrerById(req, res, next) {
+    try {
+      const referrer = await adminReferrersService.getReferrerById(req.params.id);
+      res.json({ referrer });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateAdminStatus(req, res, next) {
     try {
       const validatedData = adminToggleSchema.parse(req.body);

@@ -265,39 +265,65 @@ export default function CandidatesPage() {
                 </div>
               ) : (
                 <>
+                  {/* Select All Checkbox */}
+                  {allCandidates.length > 0 && (
+                    <div className="mb-4 flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.size > 0 && selectedIds.size === allCandidates.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(new Set(allCandidates.map(c => c.id)));
+                            } else {
+                              setSelectedIds(new Set());
+                            }
+                          }}
+                          className="w-5 h-5 rounded border-2 border-slate-300 text-slate-600 focus:ring-2 focus:ring-slate-400 focus:ring-offset-0 cursor-pointer"
+                        />
+                        <span className="text-sm font-medium text-slate-700">
+                          Select All ({selectedIds.size} selected)
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
                   <div className="space-y-3">
                     {allCandidates.map((candidate) => {
                       const isSelected = selectedIds.has(candidate.id);
                       return (
                         <div
                           key={candidate.id}
-                          onClick={() => handleCheckboxChange(candidate.id)}
-                          className={`group bg-white border-2 rounded-xl p-5 cursor-pointer transition-all duration-200 ${
+                          onClick={() => router.push(`/candidates/${candidate.id}`)}
+                          className={`group bg-white border rounded-xl p-5 cursor-pointer transition-all duration-200 ${
                             isSelected 
-                              ? 'border-orange-500 bg-orange-50/30 shadow-lg shadow-orange-500/10' 
-                              : 'border-slate-200 hover:border-slate-300 hover:shadow-lg'
+                              ? 'border-slate-400 bg-slate-50/50 shadow-md' 
+                              : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
                           }`}
                         >
                           <div className="flex gap-4">
                             {/* Checkbox Column */}
-                            <div className="flex items-start pt-0.5">
+                            <div className="flex items-start pt-0.5" onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => handleCheckboxChange(candidate.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-5 h-5 rounded border-2 border-slate-300 text-orange-600 focus:ring-2 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer"
+                                className="w-5 h-5 rounded border-2 border-slate-300 text-slate-600 focus:ring-2 focus:ring-slate-400 focus:ring-offset-0 cursor-pointer"
                               />
                             </div>
                             
                             {/* Avatar Column */}
-                            <div className="flex-shrink-0">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 border-2 border-orange-200 flex items-center justify-center shadow-sm">
-                                <span className="text-base font-bold text-orange-700">
+                            <Link
+                              href={`/candidates/${candidate.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-shrink-0"
+                            >
+                              <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shadow-sm hover:bg-slate-200 transition-colors">
+                                <span className="text-base font-bold text-slate-700">
                                   {candidate.first_name.charAt(0)}{candidate.last_name_initial}
                                 </span>
                               </div>
-                            </div>
+                            </Link>
                             
                             {/* Main Content Column */}
                             <div className="flex-1 min-w-0">
@@ -308,7 +334,7 @@ export default function CandidatesPage() {
                                     <Link 
                                       href={`/candidates/${candidate.id}`}
                                       onClick={(e) => e.stopPropagation()}
-                                      className="font-bold text-lg text-slate-900 hover:text-orange-600 transition-colors"
+                                      className="font-bold text-lg text-slate-900 hover:text-slate-600 transition-colors"
                                     >
                                       {candidate.first_name} {candidate.last_name_initial}.
                                     </Link>

@@ -152,6 +152,10 @@ export const adminApi = {
     return apiClient.get<{ referrers: AdminReferrer[] }>(API_ENDPOINTS.adminReferrers);
   },
 
+  getReferrerById: async (id: string): Promise<{ referrer: AdminReferrer & { contact_number: string | null; updatedAt: string } }> => {
+    return apiClient.get<{ referrer: AdminReferrer & { contact_number: string | null; updatedAt: string } }>(API_ENDPOINTS.adminReferrerById(id));
+  },
+
   /**
    * Update referrer admin status
    */

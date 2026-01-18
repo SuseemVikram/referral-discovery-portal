@@ -26,6 +26,52 @@ class AdminReferrersService {
   }
 
   /**
+   * Get referrer by ID with EOI count
+   */
+  async getReferrerById(id) {
+    const prisma = require('../../lib/prisma');
+    const referrer = await prisma.referrer.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        company: true,
+        role: true,
+        linkedin: true,
+        contact_number: true,
+        is_admin: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            eoiLogs: true,
+          },
+        },
+      },
+    });
+
+    if (!referrer) {
+      const { NotFoundError } = require('../utils/errors');
+      throw new NotFoundError('Referrer');
+    }
+
+    return {
+      id: referrer.id,
+      email: referrer.email,
+      full_name: referrer.full_name,
+      company: referrer.company,
+      role: referrer.role,
+      linkedin: referrer.linkedin,
+      contact_number: referrer.contact_number,
+      is_admin: referrer.is_admin,
+      createdAt: referrer.createdAt,
+      updatedAt: referrer.updatedAt,
+      eoiCount: referrer._count.eoiLogs,
+    };
+  }
+
+  /**
    * Update referrer admin status
    */
   async updateAdminStatus(id, isAdmin) {

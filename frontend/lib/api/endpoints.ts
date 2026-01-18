@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   adminCandidateAvailability: (id: string) => `/api/admin/candidates/${id}/availability`,
   adminCandidateDelete: (id: string) => `/api/admin/candidates/${id}`,
   adminReferrers: '/api/admin/referrers',
+  adminReferrerById: (id: string) => `/api/admin/referrers/${id}`,
   adminReferrerAdmin: (id: string) => `/api/admin/referrers/${id}/admin`,
   adminAdmins: '/api/admin/admins',
   adminAddAdmin: '/api/admin/admins',
