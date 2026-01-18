@@ -137,6 +137,15 @@ export const adminApi = {
   },
 
   /**
+   * Delete all candidates
+   */
+  deleteAllCandidates: async (): Promise<{ success: boolean; message: string; count: number }> => {
+    return apiClient.delete<{ success: boolean; message: string; count: number }>(
+      API_ENDPOINTS.adminCandidateDeleteAll
+    );
+  },
+
+  /**
    * Get all referrers (admin)
    */
   getReferrers: async (): Promise<{ referrers: AdminReferrer[] }> => {

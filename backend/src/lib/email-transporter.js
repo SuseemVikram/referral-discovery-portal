@@ -42,12 +42,50 @@ function createSendGridAdapter() {
         html: mailOptions.html,
       };
 
-      const result = await sgMail.send(msg);
+      try {
+        const result = await sgMail.send(msg);
+        
+        // Check for errors in response
+        if (result[0]?.statusCode !== 202) {
+          const errorBody = result[0]?.body || {};
+          const errorMessages = errorBody.errors?.map((e) => e.message).join(', ') || errorBody.message || 'Unknown SendGrid error';
+          const error = new Error(`SendGrid API error: ${errorMessages} (Status: ${result[0]?.statusCode})`);
+          error.code = result[0]?.statusCode;
+          error.response = {
+            body: errorBody,
+            headers: result[0]?.headers,
+          };
+          throw error;
+        }
+        
+        // Return format compatible with nodemailer response
+        return {
+          messageId: result[0]?.headers?.['x-message-id'] || 'unknown',
+          response: '250 Message accepted',
+          accepted: [msg.to].flat(),
+          rejected: [],
+          pending: [],
+        };
+      } catch (error) {
+        // Re-throw SendGrid errors with full details
+        if (error.response) {
+          const errorBody = error.response.body || {};
+          const errorMessages = errorBody.errors?.map((e) => `${e.message}${e.field ? ` (field: ${e.field})` : ''}`).join(', ') || error.message;
+          const detailedError = new Error(`SendGrid API error: ${errorMessages}`);
+          detailedError.code = error.code || error.response?.statusCode || 500;
+          detailedError.response = {
+            body: errorBody,
+            headers: error.response.headers,
+          };
+          throw detailedError;
+        }
+        throw error;
+      }
       
       // Return format compatible with nodemailer response
       return {
         messageId: result[0]?.headers?.['x-message-id'] || 'unknown',
-        response: result[0]?.statusCode === 202 ? '250 Message accepted' : `Status: ${result[0]?.statusCode}`,
+        response: '250 Message accepted',
         accepted: [msg.to].flat(),
         rejected: [],
         pending: [],
@@ -157,7 +195,7 @@ async function verifyTransporter() {
     
     await Promise.race([verifyPromise, timeoutPromise]);
     verificationStatus = { success: true };
-    logger.info('[Email] SMTP verification successful - Email service is ready');
+    // Don't log here - let the caller log (allows for warning vs info level)
     return verificationStatus;
   } catch (error) {
     verificationStatus = { success: false, error: error.message };

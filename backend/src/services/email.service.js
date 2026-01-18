@@ -26,13 +26,12 @@ class EmailService {
     const emailTransporter = getTransporter();
 
     if (!emailTransporter) {
-      // Use logger.error so it's always visible in production
-      logger.error(requestId, `[Email disabled] Cannot send EOI email to: ${candidateEmail} - SMTP not configured`);
+      logger.warn(requestId, `[Email disabled] Cannot send EOI email to: ${candidateEmail} - Email not configured`);
       return;
     }
 
-    // Log email attempt (always visible in production)
-    logger.error(requestId, `[Email] Attempting to send EOI email to: ${candidateEmail}`);
+    // Log email attempt
+    logger.info(requestId, `[Email] Attempting to send EOI email to: ${candidateEmail}`);
 
     const subject = `Referral interest from ${referrerName} at ${referrerCompany}`;
 
@@ -208,22 +207,26 @@ Referral Discovery Portal
         html: html,
       });
 
-      // Use logger.error for success so it's always visible in production
-      logger.error(requestId, `[Email] Successfully sent EOI email to ${candidateEmail}`, {
+      logger.info(requestId, `[Email] Successfully sent EOI email to ${candidateEmail}`, {
         messageId: info.messageId,
         response: info.response,
       });
       return info;
     } catch (error) {
       // Log full error details for debugging
-      logger.error(requestId, `[Email] Failed to send EOI email to ${candidateEmail}:`, {
+      const errorDetails = {
         message: error.message,
         code: error.code,
         command: error.command,
-        response: error.response,
         responseCode: error.responseCode,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      });
+      };
+
+      // If SendGrid error, log response body for better debugging
+      if (error.response?.body?.errors) {
+        errorDetails.sendGridErrors = error.response.body.errors;
+      }
+
+      logger.error(requestId, `[Email] Failed to send EOI email to ${candidateEmail}:`, errorDetails);
       throw error;
     }
   }
@@ -243,19 +246,18 @@ Referral Discovery Portal
     const emailTransporter = getTransporter();
 
     if (!emailTransporter) {
-      // Use logger.error so it's always visible in production
-      logger.error(requestId, '[Email disabled] Cannot send admin notification - SMTP not configured');
+      logger.warn(requestId, '[Email disabled] Cannot send admin notification - Email not configured');
       return;
     }
 
     const adminEmail = config.email.admin;
     if (!adminEmail) {
-      logger.error(requestId, 'ADMIN_EMAIL not configured. Skipping admin notification.');
+      logger.warn(requestId, 'ADMIN_EMAIL not configured. Skipping admin notification.');
       return;
     }
 
-    // Log email attempt (always visible in production)
-    logger.error(requestId, `[Email] Attempting to send admin notification to: ${adminEmail}`);
+    // Log email attempt
+    logger.info(requestId, `[Email] Attempting to send admin notification to: ${adminEmail}`);
 
     const subject = `EOI Notification: ${referrerName} sent interest to ${candidateNames.length} candidate(s)`;
 
@@ -305,8 +307,7 @@ ${candidateList}
         html: html,
       });
 
-      // Use logger.error for success so it's always visible in production
-      logger.error(requestId, '[Email] Successfully sent admin notification', {
+      logger.info(requestId, '[Email] Successfully sent admin notification', {
         messageId: info.messageId,
         response: info.response,
       });

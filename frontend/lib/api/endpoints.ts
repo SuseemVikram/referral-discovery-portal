@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
 
   // Admin
   adminCandidates: '/api/admin/candidates',
+  adminCandidateDeleteAll: '/api/admin/candidates/all',
   adminCandidateVisibility: (id: string) => `/api/admin/candidates/${id}/visibility`,
   adminCandidateAvailability: (id: string) => `/api/admin/candidates/${id}/availability`,
   adminCandidateDelete: (id: string) => `/api/admin/candidates/${id}`,

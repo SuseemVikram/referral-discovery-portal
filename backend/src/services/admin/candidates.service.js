@@ -1,6 +1,7 @@
 /**
  * Admin Candidates Service
  */
+const prisma = require('../../lib/prisma');
 const candidateRepository = require('../../repositories/candidate.repository');
 const eoiLogRepository = require('../../repositories/eoi-log.repository');
 
@@ -30,10 +31,16 @@ class AdminCandidatesService {
    * Delete candidate
    */
   async deleteCandidate(id) {
-    // Delete related EOI logs first
     await eoiLogRepository.deleteByCandidateId(id);
-    // Then delete candidate
     return candidateRepository.delete(id);
+  }
+
+  /**
+   * Delete all candidates
+   */
+  async deleteAllCandidates() {
+    await prisma.eOILog.deleteMany({});
+    return candidateRepository.deleteAll();
   }
 }
 

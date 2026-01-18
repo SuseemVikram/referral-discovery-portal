@@ -55,6 +55,7 @@ export default function AdminCandidatesPage() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const { isLoggedIn } = useAuth();
 
@@ -147,6 +148,32 @@ export default function AdminCandidatesPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ALL ${candidates.length} candidates?\n\nThis action cannot be undone. All EOI history will also be deleted.\n\nType "DELETE ALL" to confirm.`
+    );
+
+    if (!confirmed) return;
+
+    const doubleConfirm = window.prompt('Type "DELETE ALL" (case-sensitive) to confirm:');
+    if (doubleConfirm !== 'DELETE ALL') {
+      toast.error('Deletion cancelled. Confirmation text did not match.');
+      return;
+    }
+
+    setDeletingAll(true);
+
+    try {
+      const result = await adminApi.deleteAllCandidates();
+      setCandidates([]);
+      toast.success(result.message || `All ${result.count} candidates deleted successfully`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete all candidates');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   const hasFilters = emailSearch.trim() || selectedRoles.length > 0 || selectedSkills.length > 0;
 
   return (
@@ -154,9 +181,20 @@ export default function AdminCandidatesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="page-header">
           <h1 className="page-title">Candidate Management</h1>
-          <span className="text-sm text-slate-500">
-            {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-500">
+              {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}
+            </span>
+            {candidates.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                disabled={deletingAll}
+                className="btn btn-danger !py-1.5 !px-3 !text-xs"
+              >
+                {deletingAll ? 'Deleting All...' : 'Delete All'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filters Section */}

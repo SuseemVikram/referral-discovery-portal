@@ -273,6 +273,14 @@ class CandidateRepository {
   async count(where = {}) {
     return prisma.candidate.count({ where });
   }
+
+  /**
+   * Delete all candidates
+   */
+  async deleteAll() {
+    const result = await prisma.candidate.deleteMany({});
+    return { count: result.count };
+  }
 }
 
 module.exports = new CandidateRepository();

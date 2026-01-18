@@ -59,6 +59,19 @@ class AdminCandidatesController {
       next(error);
     }
   }
+
+  async deleteAllCandidates(req, res, next) {
+    try {
+      const result = await adminCandidatesService.deleteAllCandidates();
+      res.json({
+        success: true,
+        message: `All ${result.count} candidates have been deleted`,
+        count: result.count,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AdminCandidatesController();

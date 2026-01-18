@@ -38,10 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Initialize auth state - check NextAuth session first, then localStorage
   useEffect(() => {
     const initAuth = async () => {
+      // Prevent multiple initializations - only run once
+      if (authInitialized) {
+        return;
+      }
+
       // Wait for NextAuth session to finish loading
       if (sessionStatus === 'loading') {
         return;
@@ -113,10 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIsLoading(false);
+      setAuthInitialized(true);
     };
 
     initAuth();
-  }, [session, sessionStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionStatus]); // Only depend on sessionStatus, not session object itself
 
   const login = useCallback((token: string) => {
     localStorage.setItem(TOKEN_KEY, token);
