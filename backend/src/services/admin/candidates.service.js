@@ -37,10 +37,14 @@ class AdminCandidatesService {
 
   /**
    * Delete all candidates
+   * Uses transaction to ensure atomicity
    */
   async deleteAllCandidates() {
-    await prisma.eOILog.deleteMany({});
-    return candidateRepository.deleteAll();
+    return prisma.$transaction(async (tx) => {
+      await tx.eOILog.deleteMany({});
+      const result = await tx.candidate.deleteMany({});
+      return { count: result.count };
+    });
   }
 }
 

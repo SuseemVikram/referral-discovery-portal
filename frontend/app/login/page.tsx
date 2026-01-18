@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [method, setMethod] = useState<LoginMethod>('google');
+  const hasHandledSessionRef = useRef(false);
   
   // Redirect if already logged in
   useEffect(() => {
@@ -25,13 +26,14 @@ export default function LoginPage() {
     }
   }, [isLoggedIn, isLoading, router]);
   
-  // Handle NextAuth session token
+  // Handle NextAuth session token (only for Google OAuth callback)
   useEffect(() => {
-    if (session && (session as any).token) {
+    if (session && (session as any).token && !hasHandledSessionRef.current && !isLoggedIn) {
+      hasHandledSessionRef.current = true;
       login((session as any).token);
       toast.success('Logged in successfully!');
     }
-  }, [session, login]);
+  }, [session, login, isLoggedIn]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',

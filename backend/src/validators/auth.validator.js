@@ -1,13 +1,15 @@
 const { z } = require('zod');
 
+const { MAX_LENGTHS } = require('../utils/validation-constants');
+
 const signupSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  full_name: z.string(),
-  company: z.string(),
-  role: z.string(),
-  linkedin: z.string().optional(),
-  contact_number: z.string().optional(),
+  email: z.string().email().max(MAX_LENGTHS.EMAIL),
+  password: z.string().min(6).max(200),
+  full_name: z.string().max(MAX_LENGTHS.FULL_NAME),
+  company: z.string().max(MAX_LENGTHS.COMPANY),
+  role: z.string().max(MAX_LENGTHS.ROLE),
+  linkedin: z.string().max(MAX_LENGTHS.LINKEDIN).optional(),
+  contact_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
   consent: z.boolean().refine((val) => val === true, {
     message: 'Consent must be true',
   }),
@@ -19,11 +21,11 @@ const loginSchema = z.object({
 });
 
 const updateProfileSchema = z.object({
-  full_name: z.string().optional(),
-  company: z.string().optional(),
-  role: z.string().optional(),
-  linkedin: z.string().optional(),
-  contact_number: z.string().optional(),
+  full_name: z.string().max(MAX_LENGTHS.FULL_NAME).optional(),
+  company: z.string().max(MAX_LENGTHS.COMPANY).optional(),
+  role: z.string().max(MAX_LENGTHS.ROLE).optional(),
+  linkedin: z.string().max(MAX_LENGTHS.LINKEDIN).optional(),
+  contact_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
 });
 
 const changePasswordSchema = z.object({

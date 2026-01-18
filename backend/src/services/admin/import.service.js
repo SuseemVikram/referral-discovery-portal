@@ -5,6 +5,7 @@
 const { parse } = require('csv-parse/sync');
 const candidateRepository = require('../../repositories/candidate.repository');
 const logger = require('../../utils/logger');
+const { MAX_LENGTHS, MAX_ARRAY_LENGTHS } = require('../../utils/validation-constants');
 
 const REQUIRED_COLUMNS = [
   'candidate_id',
@@ -66,14 +67,25 @@ class ImportService {
         }
 
         const candidate_id = record.candidate_id.trim();
+        
+        if (candidate_id.length > MAX_LENGTHS.CANDIDATE_ID) {
+          throw new Error(`candidate_id exceeds maximum length of ${MAX_LENGTHS.CANDIDATE_ID} characters`);
+        }
 
-        // Parse data
+        // Parse data with length validation
         const target_roles = record.target_roles
-          ? record.target_roles.split(',').map((r) => r.trim()).filter(Boolean)
+          ? record.target_roles.split(',').map((r) => r.trim()).filter(Boolean).slice(0, MAX_ARRAY_LENGTHS.TARGET_ROLES)
           : [];
         const primary_skills = record.primary_skills
-          ? record.primary_skills.split(',').map((s) => s.trim()).filter(Boolean)
+          ? record.primary_skills.split(',').map((s) => s.trim()).filter(Boolean).slice(0, MAX_ARRAY_LENGTHS.PRIMARY_SKILLS)
           : [];
+        
+        if (target_roles.some(role => role.length > MAX_LENGTHS.ROLE_NAME)) {
+          throw new Error(`One or more roles exceed maximum length of ${MAX_LENGTHS.ROLE_NAME} characters`);
+        }
+        if (primary_skills.some(skill => skill.length > MAX_LENGTHS.SKILL_NAME)) {
+          throw new Error(`One or more skills exceed maximum length of ${MAX_LENGTHS.SKILL_NAME} characters`);
+        }
         const remote_ok = record.remote_ok === 'true' || record.remote_ok === true;
         const availability_status = record.availability_status || 'Open';
 
@@ -108,39 +120,58 @@ class ImportService {
             
             if (record.project1_title && record.project1_title.trim()) {
               const bullets = record.project1_bullets
-                ? record.project1_bullets.split('|').map(b => b.trim()).filter(Boolean)
+                ? record.project1_bullets.split('|').map(b => b.trim()).filter(Boolean).slice(0, MAX_ARRAY_LENGTHS.PROJECT_BULLETS)
+                  .map(b => b.substring(0, MAX_LENGTHS.PROJECT_BULLET))
                 : [];
               projects.project1 = {
-                title: record.project1_title.trim(),
+                title: record.project1_title.trim().substring(0, MAX_LENGTHS.PROJECT_TITLE),
                 bullets: bullets,
               };
             }
             
             if (record.project2_title && record.project2_title.trim()) {
               const bullets = record.project2_bullets
-                ? record.project2_bullets.split('|').map(b => b.trim()).filter(Boolean)
+                ? record.project2_bullets.split('|').map(b => b.trim()).filter(Boolean).slice(0, MAX_ARRAY_LENGTHS.PROJECT_BULLETS)
+                  .map(b => b.substring(0, MAX_LENGTHS.PROJECT_BULLET))
                 : [];
               projects.project2 = {
-                title: record.project2_title.trim(),
+                title: record.project2_title.trim().substring(0, MAX_LENGTHS.PROJECT_TITLE),
                 bullets: bullets,
               };
             }
           }
         }
 
+        // Validate field lengths
+        if (record.first_name && record.first_name.length > MAX_LENGTHS.FIRST_NAME) {
+          throw new Error(`first_name exceeds maximum length of ${MAX_LENGTHS.FIRST_NAME} characters`);
+        }
+        if (record.candidate_email && record.candidate_email.length > MAX_LENGTHS.EMAIL) {
+          throw new Error(`candidate_email exceeds maximum length of ${MAX_LENGTHS.EMAIL} characters`);
+        }
+        if (record.location && record.location.length > MAX_LENGTHS.LOCATION) {
+          throw new Error(`location exceeds maximum length of ${MAX_LENGTHS.LOCATION} characters`);
+        }
+        if (record.short_profile && record.short_profile.length > MAX_LENGTHS.SHORT_PROFILE) {
+          throw new Error(`short_profile exceeds maximum length of ${MAX_LENGTHS.SHORT_PROFILE} characters`);
+        }
+        if (record.cohort && record.cohort.trim() && record.cohort.trim().length > MAX_LENGTHS.COHORT) {
+          throw new Error(`cohort exceeds maximum length of ${MAX_LENGTHS.COHORT} characters`);
+        }
+
         const candidateData = {
           id: candidate_id,
-          candidate_email: record.candidate_email,
-          first_name: record.first_name,
-          last_name_initial: last_name_initial,
+          candidate_email: record.candidate_email.substring(0, MAX_LENGTHS.EMAIL),
+          first_name: record.first_name.substring(0, MAX_LENGTHS.FIRST_NAME),
+          last_name_initial: last_name_initial.substring(0, MAX_LENGTHS.LAST_NAME_INITIAL),
           target_roles,
           primary_skills,
-          location: record.location,
+          location: record.location.substring(0, MAX_LENGTHS.LOCATION),
           remote_ok,
           availability_status,
-          short_profile: record.short_profile,
+          short_profile: record.short_profile.substring(0, MAX_LENGTHS.SHORT_PROFILE),
           projects: projects,
-          cohort: record.cohort && record.cohort.trim() ? record.cohort.trim() : null,
+          cohort: record.cohort && record.cohort.trim() ? record.cohort.trim().substring(0, MAX_LENGTHS.COHORT) : null,
         };
 
         // Check if candidate exists before upsert

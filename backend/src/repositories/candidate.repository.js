@@ -284,33 +284,34 @@ class CandidateRepository {
 
   /**
    * Get unique roles and skills from active candidates
+   * Uses PostgreSQL array unnest for efficient aggregation
    */
   async getUniqueRolesAndSkills() {
-    const candidates = await prisma.candidate.findMany({
-      where: {
-        is_active: true,
-      },
-      select: {
-        target_roles: true,
-        primary_skills: true,
-      },
-    });
+    const [rolesResult, skillsResult] = await Promise.all([
+      prisma.$queryRaw`
+        SELECT DISTINCT unnest(target_roles) as role
+        FROM candidates
+        WHERE is_active = true
+          AND target_roles IS NOT NULL
+          AND array_length(target_roles, 1) > 0
+        ORDER BY role
+      `,
+      prisma.$queryRaw`
+        SELECT DISTINCT unnest(primary_skills) as skill
+        FROM candidates
+        WHERE is_active = true
+          AND primary_skills IS NOT NULL
+          AND array_length(primary_skills, 1) > 0
+        ORDER BY skill
+      `,
+    ]);
 
-    const rolesSet = new Set();
-    const skillsSet = new Set();
-
-    candidates.forEach((candidate) => {
-      if (candidate.target_roles) {
-        candidate.target_roles.forEach((role) => rolesSet.add(role));
-      }
-      if (candidate.primary_skills) {
-        candidate.primary_skills.forEach((skill) => skillsSet.add(skill));
-      }
-    });
+    const roles = rolesResult.map((row) => String(row.role)).filter(Boolean);
+    const skills = skillsResult.map((row) => String(row.skill)).filter(Boolean);
 
     return {
-      roles: Array.from(rolesSet).sort(),
-      skills: Array.from(skillsSet).sort(),
+      roles,
+      skills,
     };
   }
 }

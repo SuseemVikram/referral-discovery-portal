@@ -87,7 +87,7 @@ export default function AdminImportPage() {
       
       toast.success(`Successfully imported ${result.created} candidate(s). Refresh the candidates page to see updated filters.`);
     } catch (err) {
-      if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
+      if (err instanceof Error && 'status' in err && (err.status === 401 || err.status === 403)) {
         router.push('/login');
         return;
       }

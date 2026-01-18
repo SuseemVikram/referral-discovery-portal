@@ -4,6 +4,16 @@
 import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../endpoints';
 
+export interface Project {
+  title: string;
+  bullets: string[];
+}
+
+export type Projects = 
+  | { title: string; bullets: string[] }
+  | { project1?: Project; project2?: Project }
+  | Record<string, unknown>;
+
 export interface Candidate {
   id: string;
   first_name: string;
@@ -14,7 +24,7 @@ export interface Candidate {
   remote_ok: boolean;
   cohort?: string;
   short_profile: string;
-  projects: any;
+  projects: Projects;
   availability_status: 'Open' | 'Paused';
 }
 

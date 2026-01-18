@@ -50,7 +50,7 @@ export default function AdminCandidatesPage() {
 
       setCandidates(result.candidates || []);
     } catch (err) {
-      if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
+      if (err instanceof Error && 'status' in err && (err.status === 401 || err.status === 403)) {
         router.push('/login');
         return;
       }
