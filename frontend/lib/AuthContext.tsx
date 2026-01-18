@@ -155,8 +155,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAdmin(userData.is_admin || false);
         
         const profileComplete = isProfileComplete(userData);
+        const currentPath = window.location.pathname;
         
-        if (window.location.pathname !== '/candidates' && window.location.pathname !== '/account') {
+        if (currentPath === '/login' || currentPath === '/signup') {
+          if (!profileComplete) {
+            router.push('/account');
+          } else {
+            router.push('/candidates');
+          }
+        } else if (currentPath !== '/candidates' && currentPath !== '/account') {
           if (!profileComplete) {
             router.push('/account');
           } else {

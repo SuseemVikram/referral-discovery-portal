@@ -24,11 +24,27 @@ export default function CandidatesPage() {
     skills: string[];
     location: string;
     availability_status: '' | 'Open' | 'Paused';
-  }>({
-    roles: [],
-    skills: [],
-    location: '',
-    availability_status: '',
+  }>(() => {
+    if (typeof window === 'undefined') {
+      return { roles: [], skills: [], location: '', availability_status: '' };
+    }
+    try {
+      const saved = sessionStorage.getItem('candidateFilters');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          roles: Array.isArray(parsed.roles) ? parsed.roles : [],
+          skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+          location: typeof parsed.location === 'string' ? parsed.location : '',
+          availability_status: parsed.availability_status === 'Open' || parsed.availability_status === 'Paused' ? parsed.availability_status : '',
+        };
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to restore filters:', error);
+      }
+    }
+    return { roles: [], skills: [], location: '', availability_status: '' };
   });
 
   // Convert filters to hook format (memoized to prevent unnecessary re-renders)
@@ -52,6 +68,13 @@ export default function CandidatesPage() {
     availability_status: '' | 'Open' | 'Paused';
   }) => {
     setFilters(newFilters);
+    try {
+      sessionStorage.setItem('candidateFilters', JSON.stringify(newFilters));
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to save filters:', error);
+      }
+    }
   };
 
   // Restore pending EOI selection

@@ -28,13 +28,6 @@ export default function LoginPage() {
   const [method, setMethod] = useState<LoginMethod>('google');
   const hasHandledSessionRef = useRef(false);
   
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!isLoading && isLoggedIn) {
-      router.replace('/candidates');
-    }
-  }, [isLoggedIn, isLoading, router]);
-  
   // Handle NextAuth session token (only for Google OAuth callback)
   useEffect(() => {
     if (session && hasToken(session) && session.token && !hasHandledSessionRef.current && !isLoggedIn) {
