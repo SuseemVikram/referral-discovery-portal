@@ -85,24 +85,32 @@ class AuthService {
    * Update referrer profile
    */
   async updateProfile(referrerId, data) {
-    // Normalize phone_number to E.164 format if provided
-    if (data.phone_number) {
-      let normalizedPhone = data.phone_number.trim().replace(/\s+/g, '');
-      
-      // Normalize to E.164 format: ensure it starts with +
-      if (normalizedPhone && !normalizedPhone.startsWith('+')) {
-        // If it's a 10-digit number (likely Indian), add +91
-        if (/^\d{10}$/.test(normalizedPhone)) {
-          normalizedPhone = '+91' + normalizedPhone;
-        } else {
-          // For other formats, just prepend +
-          normalizedPhone = '+' + normalizedPhone;
+    // Handle phone_number: normalize if provided, or set to null if explicitly empty/undefined
+    if (data.phone_number !== undefined) {
+      if (data.phone_number && data.phone_number.trim()) {
+        let normalizedPhone = data.phone_number.trim().replace(/\s+/g, '');
+        
+        // Normalize to E.164 format: ensure it starts with +
+        if (!normalizedPhone.startsWith('+')) {
+          // If it's a 10-digit number (likely Indian), add +91
+          if (/^\d{10}$/.test(normalizedPhone)) {
+            normalizedPhone = '+91' + normalizedPhone;
+          } else {
+            // For other formats, just prepend +
+            normalizedPhone = '+' + normalizedPhone;
+          }
         }
-      }
-      
-      // Only update if valid E.164 format
-      if (/^\+[1-9]\d{1,14}$/.test(normalizedPhone)) {
-        data.phone_number = normalizedPhone;
+        
+        // Only update if valid E.164 format
+        if (/^\+[1-9]\d{1,14}$/.test(normalizedPhone)) {
+          data.phone_number = normalizedPhone;
+        } else {
+          // Invalid format, remove it
+          data.phone_number = null;
+        }
+      } else {
+        // Empty or undefined - explicitly set to null to clear it
+        data.phone_number = null;
       }
     }
     

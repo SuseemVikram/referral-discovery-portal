@@ -158,7 +158,7 @@ export default function AccountPage() {
       
       const profileData = {
         ...formData,
-        phone_number: fullPhoneNumber || undefined,
+        phone_number: fullPhoneNumber || null, // Send null explicitly to clear phone number
       };
       
       await authApi.updateProfile(profileData);
