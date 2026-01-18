@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter } from 'next/navigation';
 import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
 import { API_ENDPOINTS } from './api-config';
+import { isProfileComplete } from './utils/profile-complete';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -152,13 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((userData) => {
         setUser(userData);
         setIsAdmin(userData.is_admin || false);
-        // Check if profile is incomplete (missing company or role)
-        const isProfileIncomplete = !userData.company || !userData.role || 
-                                    userData.company.trim() === '' || userData.role.trim() === '';
         
-        // Redirect after successful login
+        const profileComplete = isProfileComplete(userData);
+        
         if (window.location.pathname !== '/candidates' && window.location.pathname !== '/account') {
-          if (isProfileIncomplete) {
+          if (!profileComplete) {
             router.push('/account');
           } else {
             router.push('/candidates');

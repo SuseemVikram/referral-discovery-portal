@@ -25,10 +25,10 @@ class EOIService {
       throw new NotFoundError('Referrer');
     }
 
-    // Validate that referrer has company and role filled
-    if (!referrer.company || !referrer.role || 
-        referrer.company.trim() === '' || referrer.role.trim() === '') {
-      throw new Error('Please complete your profile (company and role are required) before sending interest to candidates.');
+    if (!referrer.company || !referrer.role || !referrer.linkedin || !referrer.contact_number ||
+        referrer.company.trim() === '' || referrer.role.trim() === '' || 
+        referrer.linkedin.trim() === '' || referrer.contact_number.trim() === '') {
+      throw new Error('Please complete your profile (company, role, LinkedIn, and contact number are required) before sending interest to candidates.');
     }
 
     // Get candidates first (outside transaction)

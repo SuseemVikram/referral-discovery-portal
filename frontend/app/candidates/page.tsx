@@ -9,6 +9,7 @@ import { useCandidates } from '@/lib/hooks/useCandidates';
 import { useEOI } from '@/lib/hooks/useEOI';
 import { candidatesApi, Candidate } from '@/lib/api/services/candidates.api';
 import Filters from './components/Filters';
+import { isProfileComplete, storeReturnPath } from '@/lib/utils/profile-complete';
 
 export default function CandidatesPage() {
   const router = useRouter();
@@ -165,9 +166,9 @@ export default function CandidatesPage() {
       return;
     }
 
-    // Check if profile is incomplete
-    if (!user?.company || !user?.role || user.company.trim() === '' || user.role.trim() === '') {
-      toast.error('Please complete your profile (company and role are required) before sending interest. Redirecting to account page...');
+    if (!isProfileComplete(user)) {
+      storeReturnPath('/candidates', Array.from(selectedIds));
+      toast.error('Please complete your profile (company, role, LinkedIn, and contact number are required) before sending interest. Redirecting to account page...');
       setTimeout(() => {
         router.push('/account');
       }, 1500);

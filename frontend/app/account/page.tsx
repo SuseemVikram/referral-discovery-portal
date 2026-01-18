@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { authApi } from '@/lib/api/services/auth.api';
 import { isAuthError } from '@/lib/types/errors';
+import { isProfileComplete, getReturnPath, clearReturnPath } from '@/lib/utils/profile-complete';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -117,8 +118,27 @@ export default function AccountPage() {
 
     try {
       await authApi.updateProfile(formData);
+      await refreshUser();
+      
+      const updatedUser = await authApi.getProfile();
+      if (isProfileComplete(updatedUser)) {
+        const { path, selectedIds } = getReturnPath();
+        
+        if (path) {
+          clearReturnPath();
+          
+          if (path.startsWith('/candidates') && selectedIds.length > 0) {
+            sessionStorage.setItem('pendingEOI', JSON.stringify(selectedIds));
+          }
+          
+          setTimeout(() => {
+            router.push(path);
+          }, 1000);
+          return;
+        }
+      }
+      
       setSuccess('Profile updated successfully');
-      refreshUser();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {

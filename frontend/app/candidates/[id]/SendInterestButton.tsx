@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { useEOI } from '@/lib/hooks/useEOI';
+import { isProfileComplete, storeReturnPath } from '@/lib/utils/profile-complete';
 
 interface SendInterestButtonProps {
   candidateId: string;
@@ -25,9 +26,9 @@ export default function SendInterestButton({ candidateId }: SendInterestButtonPr
       return;
     }
 
-    // Check if profile is incomplete
-    if (!user?.company || !user?.role || user.company.trim() === '' || user.role.trim() === '') {
-      toast.error('Please complete your profile (company and role are required) before sending interest. Redirecting to account page...');
+    if (!isProfileComplete(user)) {
+      storeReturnPath(`/candidates/${candidateId}`, [candidateId]);
+      toast.error('Please complete your profile (company, role, LinkedIn, and contact number are required) before sending interest. Redirecting to account page...');
       setTimeout(() => {
         router.push('/account');
       }, 1500);
