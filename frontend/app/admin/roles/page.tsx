@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { adminApi } from '@/lib/api/services/admin.api';
+import { isAuthError } from '@/lib/types/errors';
 
 interface Admin {
   id: string;
@@ -33,7 +34,7 @@ export default function AdminRolesPage() {
       const data = await adminApi.getAdmins();
       setAdmins(data.admins || []);
     } catch (err) {
-      if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
+      if (err instanceof Error && isAuthError(err)) {
         router.push('/login');
         return;
       }

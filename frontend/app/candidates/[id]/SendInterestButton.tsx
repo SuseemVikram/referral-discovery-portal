@@ -12,7 +12,7 @@ interface SendInterestButtonProps {
 
 export default function SendInterestButton({ candidateId }: SendInterestButtonProps) {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { sendEOI, loading: sending } = useEOI();
   const [sent, setSent] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -22,6 +22,15 @@ export default function SendInterestButton({ candidateId }: SendInterestButtonPr
       // Save this candidate for after login
       sessionStorage.setItem('pendingEOI', JSON.stringify([candidateId]));
       router.push('/login');
+      return;
+    }
+
+    // Check if profile is incomplete
+    if (!user?.company || !user?.role || user.company.trim() === '' || user.role.trim() === '') {
+      toast.error('Please complete your profile (company and role are required) before sending interest. Redirecting to account page...');
+      setTimeout(() => {
+        router.push('/account');
+      }, 1500);
       return;
     }
 

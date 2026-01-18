@@ -8,6 +8,15 @@ import { useAuth } from '@/lib/AuthContext';
 import { authApi } from '@/lib/api/services/auth.api';
 import toast from 'react-hot-toast';
 
+interface SessionWithToken {
+  token?: string;
+  [key: string]: unknown;
+}
+
+function hasToken(session: unknown): session is SessionWithToken {
+  return typeof session === 'object' && session !== null && 'token' in session;
+}
+
 type LoginMethod = 'email' | 'google' | 'otp';
 
 export default function LoginPage() {
@@ -28,9 +37,9 @@ export default function LoginPage() {
   
   // Handle NextAuth session token (only for Google OAuth callback)
   useEffect(() => {
-    if (session && (session as any).token && !hasHandledSessionRef.current && !isLoggedIn) {
+    if (session && hasToken(session) && session.token && !hasHandledSessionRef.current && !isLoggedIn) {
       hasHandledSessionRef.current = true;
-      login((session as any).token);
+      login(session.token);
       toast.success('Logged in successfully!');
     }
   }, [session, login, isLoggedIn]);

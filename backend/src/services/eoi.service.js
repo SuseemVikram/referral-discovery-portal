@@ -25,6 +25,12 @@ class EOIService {
       throw new NotFoundError('Referrer');
     }
 
+    // Validate that referrer has company and role filled
+    if (!referrer.company || !referrer.role || 
+        referrer.company.trim() === '' || referrer.role.trim() === '') {
+      throw new Error('Please complete your profile (company and role are required) before sending interest to candidates.');
+    }
+
     // Get candidates first (outside transaction)
     const candidates = await candidateRepository.findByIdsForEOI(candidateIds);
 

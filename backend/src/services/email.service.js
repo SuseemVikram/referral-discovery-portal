@@ -33,11 +33,22 @@ class EmailService {
     // Log email attempt
     logger.info(requestId, `[Email] Attempting to send EOI email to: ${candidateEmail}`);
 
-    const subject = `${referrerName} from ${referrerCompany} - Referral Opportunity`;
+    // Handle null/empty company and role gracefully
+    const safeCompany = (referrerCompany && referrerCompany.trim()) || 'their organization';
+    const safeRole = (referrerRole && referrerRole.trim()) || 'a professional';
+
+    // Subject line - avoid "from null"
+    const subject = referrerCompany && referrerCompany.trim()
+      ? `${referrerName} from ${referrerCompany} - Referral Opportunity`
+      : `${referrerName} - Referral Opportunity`;
 
     // Opening message for referral introduction
-    const openingMessage = `You are being referred for an opportunity at ${referrerCompany}.`;
-    const introMessage = `A professional from ${referrerCompany} has reviewed your profile and would like to connect with you to discuss a potential referral.`;
+    const openingMessage = referrerCompany && referrerCompany.trim()
+      ? `You are being referred for an opportunity at ${referrerCompany}.`
+      : `You are being referred for a new opportunity.`;
+    const introMessage = referrerCompany && referrerCompany.trim()
+      ? `A professional from ${referrerCompany} has reviewed your profile and would like to connect with you to discuss a potential referral.`
+      : `A professional has reviewed your profile and would like to connect with you to discuss a potential referral.`;
 
     // Optional fields - only render if present
     const rolesList = targetRoles && targetRoles.length > 0
@@ -92,18 +103,18 @@ class EmailService {
                               <span style="font-size: 15px; color: #1e293b; font-weight: 500;">${referrerName}</span>
                             </td>
                           </tr>
-                          <tr>
+                          ${referrerCompany && referrerCompany.trim() ? `<tr>
                             <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
                               <span style="display: inline-block; min-width: 90px; font-size: 14px; font-weight: 600; color: #64748b;">Company:</span>
                               <span style="font-size: 15px; color: #1e293b; font-weight: 600;">${referrerCompany}</span>
                             </td>
-                          </tr>
-                          <tr>
+                          </tr>` : ''}
+                          ${referrerRole && referrerRole.trim() ? `<tr>
                             <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
                               <span style="display: inline-block; min-width: 90px; font-size: 14px; font-weight: 600; color: #64748b;">Role:</span>
                               <span style="font-size: 15px; color: #1e293b;">${referrerRole}</span>
                             </td>
-                          </tr>
+                          </tr>` : ''}
                           <tr>
                             <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
                               <span style="display: inline-block; min-width: 90px; font-size: 14px; font-weight: 600; color: #64748b;">Email:</span>

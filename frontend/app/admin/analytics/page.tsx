@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { adminApi } from '@/lib/api/services/admin.api';
+import { isAuthError } from '@/lib/types/errors';
 
 interface AnalyticsData {
   summary: {
@@ -52,7 +53,7 @@ export default function AdminAnalyticsPage() {
       const result = await adminApi.getAnalytics(days);
       setData(result);
     } catch (err) {
-      if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
+      if (err instanceof Error && isAuthError(err)) {
         router.push('/login');
         return;
       }

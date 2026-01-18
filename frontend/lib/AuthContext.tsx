@@ -17,6 +17,15 @@ interface User {
   is_admin: boolean;
 }
 
+interface SessionWithToken {
+  token?: string;
+  [key: string]: unknown;
+}
+
+function hasToken(session: unknown): session is SessionWithToken {
+  return typeof session === 'object' && session !== null && 'token' in session;
+}
+
 interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
@@ -57,11 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Priority 1: Check NextAuth session for token
       if (sessionStatus === 'authenticated' && session) {
-        const nextAuthToken = (session as any).token;
-        if (nextAuthToken) {
-          token = nextAuthToken;
+        if (hasToken(session) && session.token) {
+          token = session.token;
           // Sync to localStorage
-          localStorage.setItem(TOKEN_KEY, nextAuthToken);
+          localStorage.setItem(TOKEN_KEY, session.token);
           if (process.env.NODE_ENV === 'development') {
             console.log('✅ Found token in NextAuth session, syncing to localStorage');
           }
@@ -101,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsAdmin(false);
             setUser(null);
             // If it's a NextAuth token issue, sign out from NextAuth too
-            if (session && (session as any).token === token) {
+            if (session && hasToken(session) && session.token === token) {
               nextAuthSignOut({ redirect: false });
             }
           } else {
@@ -144,9 +152,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((userData) => {
         setUser(userData);
         setIsAdmin(userData.is_admin || false);
-        // Redirect after successful login (only if not already on candidates page)
-        if (window.location.pathname !== '/candidates') {
-          router.push('/candidates');
+        // Check if profile is incomplete (missing company or role)
+        const isProfileIncomplete = !userData.company || !userData.role || 
+                                    userData.company.trim() === '' || userData.role.trim() === '';
+        
+        // Redirect after successful login
+        if (window.location.pathname !== '/candidates' && window.location.pathname !== '/account') {
+          if (isProfileIncomplete) {
+            router.push('/account');
+          } else {
+            router.push('/candidates');
+          }
         }
       })
       .catch((error) => {

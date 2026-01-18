@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { adminApi } from '@/lib/api/services/admin.api';
+import { isAuthError } from '@/lib/types/errors';
 
 interface Referrer {
   id: string;
@@ -35,7 +36,7 @@ export default function AdminReferrersPage() {
         const data = await adminApi.getReferrers();
         setReferrers(data.referrers || []);
       } catch (err) {
-        if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
+        if (err instanceof Error && isAuthError(err)) {
           router.push('/login');
           return;
         }
@@ -45,7 +46,7 @@ export default function AdminReferrersPage() {
       }
     }
     loadReferrers();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, router]);
 
   if (loading) {
     return (

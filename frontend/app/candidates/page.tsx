@@ -12,7 +12,7 @@ import Filters from './components/Filters';
 
 export default function CandidatesPage() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,6 +162,15 @@ export default function CandidatesPage() {
 
     if (selectedIds.size === 0) {
       toast.error('Please select at least one candidate');
+      return;
+    }
+
+    // Check if profile is incomplete
+    if (!user?.company || !user?.role || user.company.trim() === '' || user.role.trim() === '') {
+      toast.error('Please complete your profile (company and role are required) before sending interest. Redirecting to account page...');
+      setTimeout(() => {
+        router.push('/account');
+      }, 1500);
       return;
     }
 

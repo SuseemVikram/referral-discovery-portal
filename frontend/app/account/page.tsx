@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { authApi } from '@/lib/api/services/auth.api';
+import { isAuthError } from '@/lib/types/errors';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function AccountPage() {
           contact_number: data.contact_number || '',
         });
       } catch (err) {
-        if (err instanceof Error && (err as any).status === 401) {
+        if (err instanceof Error && isAuthError(err)) {
           logout();
           return;
         }
