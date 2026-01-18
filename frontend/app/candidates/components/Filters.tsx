@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRolesAndSkills } from '@/lib/hooks/useRolesAndSkills';
 
 interface FiltersProps {
@@ -23,6 +23,10 @@ export default function Filters({ filters, onChange }: FiltersProps) {
   const [expandedSections, setExpandedSections] = useState({
     roles: true,
     skills: false,
+  });
+  const [searchQuery, setSearchQuery] = useState({
+    roles: '',
+    skills: '',
   });
 
   const toggleSection = (section: 'roles' | 'skills') => {
@@ -58,9 +62,22 @@ export default function Filters({ filters, onChange }: FiltersProps) {
 
   const clearFilters = () => {
     onChange({ roles: [], skills: [], location: '', availability_status: '' });
+    setSearchQuery({ roles: '', skills: '' });
   };
 
   const hasActiveFilters = filters.roles.length > 0 || filters.skills.length > 0 || filters.location || filters.availability_status;
+
+  const filteredRoles = useMemo(() => {
+    if (!searchQuery.roles.trim()) return AVAILABLE_ROLES;
+    const query = searchQuery.roles.toLowerCase().trim();
+    return AVAILABLE_ROLES.filter((role) => role.toLowerCase().includes(query));
+  }, [AVAILABLE_ROLES, searchQuery.roles]);
+
+  const filteredSkills = useMemo(() => {
+    if (!searchQuery.skills.trim()) return AVAILABLE_SKILLS;
+    const query = searchQuery.skills.toLowerCase().trim();
+    return AVAILABLE_SKILLS.filter((skill) => skill.toLowerCase().includes(query));
+  }, [AVAILABLE_SKILLS, searchQuery.skills]);
 
   return (
     <div className="card overflow-hidden">
@@ -130,21 +147,36 @@ export default function Filters({ filters, onChange }: FiltersProps) {
           </svg>
         </button>
         {expandedSections.roles && (
-          <div className="px-4 pb-3 space-y-1">
-            {AVAILABLE_ROLES.map((role) => (
-              <label
-                key={role}
-                className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.roles.includes(role)}
-                  onChange={(e) => handleRoleChange(role, e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                <span className="text-sm text-slate-700">{role}</span>
-              </label>
-            ))}
+          <div className="px-4 pb-3 space-y-2">
+            <input
+              type="text"
+              value={searchQuery.roles}
+              onChange={(e) => setSearchQuery((prev) => ({ ...prev, roles: e.target.value }))}
+              placeholder="Search roles..."
+              className="input !py-2 text-sm"
+            />
+            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+              {filteredRoles.length > 0 ? (
+                filteredRoles.map((role) => (
+                  <label
+                    key={role}
+                    className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.roles.includes(role)}
+                      onChange={(e) => handleRoleChange(role, e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="text-sm text-slate-700">{role}</span>
+                  </label>
+                ))
+              ) : (
+                <div className="py-4 text-center text-sm text-slate-500">
+                  No roles found matching &quot;{searchQuery.roles}&quot;
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -172,21 +204,36 @@ export default function Filters({ filters, onChange }: FiltersProps) {
           </svg>
         </button>
         {expandedSections.skills && (
-          <div className="px-4 pb-3 grid grid-cols-2 gap-1">
-            {AVAILABLE_SKILLS.map((skill) => (
-              <label
-                key={skill}
-                className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.skills.includes(skill)}
-                  onChange={(e) => handleSkillChange(skill, e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                <span className="text-xs text-slate-700">{skill}</span>
-              </label>
-            ))}
+          <div className="px-4 pb-3 space-y-2">
+            <input
+              type="text"
+              value={searchQuery.skills}
+              onChange={(e) => setSearchQuery((prev) => ({ ...prev, skills: e.target.value }))}
+              placeholder="Search skills..."
+              className="input !py-2 text-sm"
+            />
+            <div className="grid grid-cols-2 gap-1 max-h-[300px] overflow-y-auto">
+              {filteredSkills.length > 0 ? (
+                filteredSkills.map((skill) => (
+                  <label
+                    key={skill}
+                    className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.skills.includes(skill)}
+                      onChange={(e) => handleSkillChange(skill, e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="text-xs text-slate-700">{skill}</span>
+                  </label>
+                ))
+              ) : (
+                <div className="col-span-2 py-4 text-center text-sm text-slate-500">
+                  No skills found matching &quot;{searchQuery.skills}&quot;
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
