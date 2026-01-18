@@ -11,7 +11,7 @@ export function useRolesAndSkills() {
       const metadata = await candidatesApi.getFilterMetadata();
       setRoles(metadata.roles.sort());
       setSkills(metadata.skills.sort());
-    } catch () {
+    } catch (error) {
       setRoles([]);
       setSkills([]);
     } finally {
