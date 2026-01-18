@@ -97,16 +97,18 @@ export const authApi = {
 
   /**
    * Request OTP
+   * Returns success if OTP sent, or throws error with needsSignup if phone not found (login flow)
+   * Set for_signup=true to allow sending OTP for new users (signup flow)
    */
-  requestOTP: async (phone_number: string): Promise<{ success: boolean; message: string }> => {
-    return apiClient.post('/auth/otp/request', { phone_number });
+  requestOTP: async (phone_number: string, for_signup: boolean = false): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post('/auth/otp/request', { phone_number, for_signup });
   },
 
   /**
    * Verify OTP
    */
-  verifyOTP: async (phone_number: string, otp: string): Promise<AuthResponse> => {
-    return apiClient.post<AuthResponse>('/auth/otp/verify', { phone_number, otp });
+  verifyOTP: async (phone_number: string, otp: string, signup_data?: any): Promise<AuthResponse> => {
+    return apiClient.post<AuthResponse>('/auth/otp/verify', { phone_number, otp, signup_data });
   },
 };
 

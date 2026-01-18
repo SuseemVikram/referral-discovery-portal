@@ -130,5 +130,10 @@ module.exports = {
   eoi: {
     dailyLimit: Number(process.env.EOI_DAILY_LIMIT) || 20,
   },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    verifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
+  },
 };
 

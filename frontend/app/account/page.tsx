@@ -9,7 +9,7 @@ import { isProfileComplete, getReturnPath, clearReturnPath } from '@/lib/utils/p
 
 export default function AccountPage() {
   const router = useRouter();
-  const { isLoggedIn, isLoading: authLoading, isLoggingOut, logout, refreshUser } = useAuth();
+  const { isLoggedIn, isLoading: authLoading, isLoggingOut, logout, refreshUser, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

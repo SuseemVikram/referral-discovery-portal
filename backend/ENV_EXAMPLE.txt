@@ -39,9 +39,19 @@ EOI_DAILY_LIMIT=20
 # Redis Configuration (Optional - for production OTP and rate limiting)
 # REDIS_URL=redis://localhost:6379
 
+# Twilio Configuration (Required for OTP/SMS)
+# Get these from: https://console.twilio.com/
+TWILIO_ACCOUNT_SID=your_account_sid_here
+TWILIO_AUTH_TOKEN=your_auth_token_here
+TWILIO_VERIFY_SERVICE_SID=VAyour_verify_service_sid_here
+
 # Note: Email Configuration Priority
 # 1. If SENDGRID_API_KEY is set → Uses SendGrid API (works on Railway/cloud)
 # 2. Otherwise → Uses SMTP configuration (works locally with Gmail)
 # 
 # For Local Development: Keep Gmail SMTP settings
 # For Railway/Cloud: Set SENDGRID_API_KEY (removes need for SMTP_* variables)
+#
+# OTP Configuration:
+# - If Twilio credentials are set → Uses Twilio Verify Service (production)
+# - If not set → Falls back to dev mode (logs OTP to console)

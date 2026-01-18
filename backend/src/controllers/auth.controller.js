@@ -120,22 +120,64 @@ class AuthController {
   /**
    * POST /auth/otp/request
    * Request OTP for mobile number
+   * Checks if phone exists first - if new user, returns needsSignup flag
    */
   async requestOTP(req, res, next) {
     try {
       const otpService = require('../services/otp.service');
-      const { phone_number } = req.body;
+      const referrerRepository = require('../repositories/referrer.repository');
+      let { phone_number, check_only, for_signup } = req.body;
 
       if (!phone_number) {
         return res.status(400).json({ error: 'Phone number is required' });
       }
 
-      // Validate phone number format (basic validation)
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-      if (!phoneRegex.test(phone_number)) {
-        return res.status(400).json({ error: 'Invalid phone number format' });
+      // Normalize phone number: remove spaces, ensure E.164 format
+      phone_number = phone_number.trim().replace(/\s+/g, '');
+      
+      // Ensure it starts with + (required for Twilio E.164 format)
+      if (!phone_number.startsWith('+')) {
+        return res.status(400).json({ 
+          error: 'Phone number must include country code. Format: +[country code][number] (e.g., +911234567890)' 
+        });
       }
 
+      // Validate phone number format (E.164: + followed by 1-15 digits)
+      const phoneRegex = /^\+[1-9]\d{1,14}$/;
+      if (!phoneRegex.test(phone_number)) {
+        return res.status(400).json({ 
+          error: 'Invalid phone number format. Use E.164 format: +[country code][number] (e.g., +911234567890)' 
+        });
+      }
+
+      // If check_only flag, just return whether phone exists (without sending OTP)
+      if (check_only) {
+        const existingReferrer = await referrerRepository.findByPhoneNumber(phone_number);
+        return res.json({ 
+          exists: !!existingReferrer,
+          needsSignup: !existingReferrer 
+        });
+      }
+
+      // For signup flow: allow sending OTP even if phone doesn't exist
+      if (for_signup) {
+        await otpService.sendOTP(phone_number);
+        return res.json({ success: true, message: 'OTP sent successfully' });
+      }
+
+      // For login flow: check if phone exists before sending OTP
+      const existingReferrer = await referrerRepository.findByPhoneNumber(phone_number);
+      
+      // If phone not found and this is for login, return needsSignup flag (don't send OTP)
+      if (!existingReferrer) {
+        return res.status(404).json({ 
+          needsSignup: true,
+          phoneNumber: phone_number,
+          message: 'Phone number not registered. Please sign up first.' 
+        });
+      }
+
+      // Phone exists - send OTP for login
       await otpService.sendOTP(phone_number);
       res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {
@@ -150,21 +192,34 @@ class AuthController {
   async verifyOTP(req, res, next) {
     try {
       const otpService = require('../services/otp.service');
-      const { phone_number, otp } = req.body;
+      let { phone_number, otp, signup_data } = req.body;
 
       if (!phone_number || !otp) {
         return res.status(400).json({ error: 'Phone number and OTP are required' });
       }
 
-      // Verify OTP
-      const verification = otpService.verifyOTP(phone_number, otp);
+      // Normalize phone number: remove spaces
+      phone_number = phone_number.trim().replace(/\s+/g, '');
+
+      // Verify OTP (now async with Twilio)
+      const verification = await otpService.verifyOTP(phone_number, otp);
       
       if (!verification.valid) {
         return res.status(400).json({ error: verification.error });
       }
 
-      // Authenticate user
-      const result = await authService.mobileOTPAuth(phone_number);
+      // Authenticate user (with signup data if provided)
+      const result = await authService.mobileOTPAuth(phone_number, signup_data);
+      
+      // If needs signup, return 404-like status to indicate redirect needed
+      if (result.needsSignup) {
+        return res.status(404).json({ 
+          needsSignup: true, 
+          phoneNumber: result.phoneNumber,
+          message: 'Phone number not found. Please sign up.' 
+        });
+      }
+
       res.json(result);
     } catch (error) {
       next(error);

@@ -7,6 +7,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { useAuth } from '@/lib/AuthContext';
 import { authApi } from '@/lib/api/services/auth.api';
 import toast from 'react-hot-toast';
+import { COUNTRY_CODES, CountryCode } from '@/lib/constants/country-codes';
 
 interface SessionWithToken {
   token?: string;
@@ -44,6 +45,24 @@ export default function LoginPage() {
   });
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOTP, setSendingOTP] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState<CountryCode>(COUNTRY_CODES.find(c => c.code === 'IN') || COUNTRY_CODES[0]);
+  const [countryCodeDropdownOpen, setCountryCodeDropdownOpen] = useState(false);
+  const [countryCodeSearch, setCountryCodeSearch] = useState('');
+  const countryCodeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (countryCodeDropdownRef.current && !countryCodeDropdownRef.current.contains(event.target as Node)) {
+        setCountryCodeDropdownOpen(false);
+      }
+    }
+    if (countryCodeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [countryCodeDropdownOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -98,9 +117,24 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await authApi.requestOTP(formData.phone_number);
-      setOtpSent(true);
-      toast.success('OTP sent to your phone number');
+      // Combine country code with phone number
+      const phoneNumber = formData.phone_number.trim().replace(/\s+/g, '');
+      const fullPhoneNumber = selectedCountryCode.dialCode + phoneNumber;
+      
+      try {
+        await authApi.requestOTP(fullPhoneNumber);
+        setOtpSent(true);
+        toast.success('OTP sent to your phone number');
+      } catch (err: any) {
+        // If phone number not found (new user), redirect to signup immediately
+        if (err?.status === 404 || err?.response?.status === 404 || (err?.response?.data?.needsSignup)) {
+          const phoneParam = encodeURIComponent(fullPhoneNumber);
+          router.push(`/signup?phone=${phoneParam}&method=otp`);
+          toast('Phone number not registered. Please sign up first.', { icon: 'ℹ️' });
+          return;
+        }
+        throw err;
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send OTP';
       setError(errorMessage);
@@ -116,9 +150,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await authApi.verifyOTP(formData.phone_number, formData.otp);
+      // Combine country code with phone number
+      const phoneNumber = formData.phone_number.trim().replace(/\s+/g, '');
+      const fullPhoneNumber = selectedCountryCode.dialCode + phoneNumber;
+      
+      // At this point, phone should exist (checked before sending OTP)
+      const result = await authApi.verifyOTP(fullPhoneNumber, formData.otp);
       login(result.token);
       toast.success('Logged in successfully!');
+      router.push('/account');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'OTP verification failed';
       setError(errorMessage);
@@ -285,22 +325,72 @@ export default function LoginPage() {
 
           {/* Mobile OTP Form */}
           {method === 'otp' && (
-            <form onSubmit={handleOTPSubmit} className="space-y-5">
+            <form onSubmit={handleOTPSubmit} className="space-y-5 relative">
               <div>
                 <label className="block mb-2 text-sm font-medium text-slate-700">
                   Phone Number
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleChange}
-                    required
-                    className="input flex-1"
-                    placeholder="+91 12345 67890"
-                    disabled={otpSent}
-                  />
+                  <div className="relative flex-1 overflow-visible" ref={countryCodeDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setCountryCodeDropdownOpen(!countryCodeDropdownOpen)}
+                      disabled={otpSent}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm text-slate-700 hover:text-slate-900 z-[11] bg-white px-2.5 py-1.5 rounded-md border border-slate-300 pointer-events-auto"
+                    >
+                      <span className="whitespace-nowrap">{selectedCountryCode.dialCode}</span>
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {countryCodeDropdownOpen && (
+                      <div className="absolute left-0 top-full mt-1 w-full sm:w-80 bg-white border border-slate-300 rounded-lg shadow-xl z-[100] max-h-96 overflow-hidden flex flex-col">
+                        <div className="p-2 border-b border-slate-200">
+                          <input
+                            type="text"
+                            placeholder="Search country..."
+                            value={countryCodeSearch}
+                            onChange={(e) => setCountryCodeSearch(e.target.value)}
+                            className="input !py-2 w-full"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="overflow-y-auto max-h-80">
+                          {COUNTRY_CODES.filter((country) =>
+                            country.name.toLowerCase().includes(countryCodeSearch.toLowerCase()) ||
+                            country.dialCode.includes(countryCodeSearch) ||
+                            country.code.toLowerCase().includes(countryCodeSearch.toLowerCase())
+                          ).map((country) => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCountryCode(country);
+                                setCountryCodeDropdownOpen(false);
+                                setCountryCodeSearch('');
+                              }}
+                              className={`w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                                selectedCountryCode.code === country.code ? 'bg-slate-100' : ''
+                              }`}
+                            >
+                              <span className="text-sm text-slate-700">{country.name}</span>
+                              <span className="text-sm font-medium text-slate-900">{country.dialCode}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="tel"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleChange}
+                      required
+                      className="input flex-1 !pl-[130px]"
+                      placeholder="1234567890"
+                      disabled={otpSent}
+                    />
+                  </div>
                   {!otpSent && (
                     <button
                       type="button"

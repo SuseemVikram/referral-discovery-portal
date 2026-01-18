@@ -1,110 +1,115 @@
 /**
  * OTP Service
- * Handles OTP generation, storage, and verification
+ * Handles OTP generation, storage, and verification using Twilio Verify Service
  */
-const crypto = require('crypto');
+const twilio = require('twilio');
 const logger = require('../utils/logger');
+const config = require('../config/env');
 
-// In-memory store for OTPs (in production, use Redis or database)
-const otpStore = new Map();
+let twilioClient = null;
 
-// OTP configuration
-const OTP_EXPIRY_MINUTES = 10;
-const OTP_LENGTH = 6;
+if (config.twilio.accountSid && config.twilio.authToken) {
+  twilioClient = twilio(config.twilio.accountSid, config.twilio.authToken);
+}
 
 class OTPService {
   /**
-   * Generate a random OTP
-   */
-  generateOTP() {
-    return crypto.randomInt(100000, 999999).toString();
-  }
-
-  /**
-   * Store OTP with expiry
-   */
-  storeOTP(phoneNumber, otp) {
-    const expiry = Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000;
-    otpStore.set(phoneNumber, {
-      otp,
-      expiry,
-      attempts: 0,
-    });
-    
-    // Clean up expired OTPs
-    setTimeout(() => {
-      if (otpStore.has(phoneNumber)) {
-        const stored = otpStore.get(phoneNumber);
-        if (stored.expiry < Date.now()) {
-          otpStore.delete(phoneNumber);
-        }
-      }
-    }, OTP_EXPIRY_MINUTES * 60 * 1000);
-  }
-
-  /**
-   * Verify OTP
-   */
-  verifyOTP(phoneNumber, otp) {
-    const stored = otpStore.get(phoneNumber);
-    
-    if (!stored) {
-      return { valid: false, error: 'OTP not found or expired' };
-    }
-
-    if (stored.expiry < Date.now()) {
-      otpStore.delete(phoneNumber);
-      return { valid: false, error: 'OTP expired' };
-    }
-
-    if (stored.attempts >= 5) {
-      return { valid: false, error: 'Too many attempts. Please request a new OTP' };
-    }
-
-    stored.attempts++;
-
-    if (stored.otp !== otp) {
-      return { valid: false, error: 'Invalid OTP' };
-    }
-
-    // OTP verified, remove it
-    otpStore.delete(phoneNumber);
-    return { valid: true };
-  }
-
-  /**
-   * Send OTP via SMS (placeholder - integrate with Twilio or other provider)
+   * Send OTP via SMS using Twilio Verify Service
    */
   async sendOTP(phoneNumber) {
-    const otp = this.generateOTP();
-    this.storeOTP(phoneNumber, otp);
-
-    // NOTE: SMS integration pending - currently logging OTP for development/testing
-    // In production, integrate with SMS provider (Twilio, AWS SNS, etc.)
-    // Only log OTP in development mode
-    if (process.env.NODE_ENV === 'development') {
-      logger.info(`OTP for ${phoneNumber}: ${otp}`);
+    if (!twilioClient) {
+      if (process.env.NODE_ENV === 'development') {
+        logger.warn('Twilio not configured. OTP will be logged to console only.');
+        logger.info(`[DEV MODE] OTP for ${phoneNumber}: 123456`);
+        return { success: true, message: 'OTP sent successfully (dev mode)' };
+      }
+      throw new Error('Twilio is not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.');
     }
-    
-    // Placeholder: In production, use Twilio or another SMS service
-    // Example with Twilio:
-    // const twilio = require('twilio');
-    // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    // await client.messages.create({
-    //   body: `Your OTP is: ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`,
-    //   to: phoneNumber,
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    // });
 
-    return { success: true, message: 'OTP sent successfully' };
+    if (!config.twilio.verifyServiceSid) {
+      throw new Error('TWILIO_VERIFY_SERVICE_SID is required');
+    }
+
+    try {
+      const verification = await twilioClient.verify.v2
+        .services(config.twilio.verifyServiceSid)
+        .verifications
+        .create({
+          to: phoneNumber,
+          channel: 'sms',
+        });
+
+      logger.info(`OTP verification sent to ${phoneNumber}. Status: ${verification.status}`);
+      return { success: true, message: 'OTP sent successfully' };
+    } catch (error) {
+      logger.error(`Failed to send OTP to ${phoneNumber}:`, error.message);
+      
+      if (error.code === 60200) {
+        throw new Error('Invalid phone number format');
+      } else if (error.code === 60203) {
+        throw new Error('Maximum number of attempts reached. Please try again later.');
+      } else if (error.code === 20429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+      
+      throw new Error(`Failed to send OTP: ${error.message}`);
+    }
   }
 
   /**
-   * Check if OTP exists for phone number
+   * Verify OTP using Twilio Verify Service
+   */
+  async verifyOTP(phoneNumber, otp) {
+    if (!twilioClient) {
+      if (process.env.NODE_ENV === 'development') {
+        if (otp === '123456') {
+          logger.info(`[DEV MODE] OTP verified for ${phoneNumber}`);
+          return { valid: true };
+        }
+        return { valid: false, error: 'Invalid OTP' };
+      }
+      throw new Error('Twilio is not configured');
+    }
+
+    if (!config.twilio.verifyServiceSid) {
+      throw new Error('TWILIO_VERIFY_SERVICE_SID is required');
+    }
+
+    try {
+      const verificationCheck = await twilioClient.verify.v2
+        .services(config.twilio.verifyServiceSid)
+        .verificationChecks
+        .create({
+          to: phoneNumber,
+          code: otp,
+        });
+
+      if (verificationCheck.status === 'approved') {
+        logger.info(`OTP verified successfully for ${phoneNumber}`);
+        return { valid: true };
+      } else {
+        logger.warn(`OTP verification failed for ${phoneNumber}. Status: ${verificationCheck.status}`);
+        return { valid: false, error: 'Invalid or expired OTP' };
+      }
+    } catch (error) {
+      logger.error(`Failed to verify OTP for ${phoneNumber}:`, error.message);
+      
+      if (error.code === 20404) {
+        return { valid: false, error: 'OTP not found or expired. Please request a new OTP.' };
+      } else if (error.code === 60202) {
+        return { valid: false, error: 'Too many attempts. Please request a new OTP.' };
+      }
+      
+      return { valid: false, error: `Verification failed: ${error.message}` };
+    }
+  }
+
+  /**
+   * Check if OTP exists for phone number (not applicable with Twilio Verify)
+   * Kept for backward compatibility
    */
   hasOTP(phoneNumber) {
-    const stored = otpStore.get(phoneNumber);
-    return stored && stored.expiry > Date.now();
+    return true;
   }
 }
 

@@ -183,21 +183,40 @@ class AuthService {
   /**
    * Mobile OTP login/signup
    */
-  async mobileOTPAuth(phoneNumber) {
+  async mobileOTPAuth(phoneNumber, signupData = null) {
     // Check if user exists by phone_number
     let referrer = await referrerRepository.findByPhoneNumber(phoneNumber);
     
     if (!referrer) {
-      // Create new referrer with phone number
-      referrer = await referrerRepository.create({
-        email: `${phoneNumber}@mobile.local`, // Placeholder email
-        phone_number: phoneNumber,
-        // Other fields will be filled in account page
-        full_name: null,
-        company: null,
-        role: null,
-        password_hash: null, // No password for OTP users
-      });
+      // If signupData is provided, create user with all details (mobile signup)
+      if (signupData) {
+        const { email, full_name, company, role, linkedin, contact_number } = signupData;
+        
+        // Validate required fields for mobile signup
+        if (!email || !full_name || !company || !role || !linkedin || !contact_number) {
+          throw new Error('All fields (email, name, company, role, LinkedIn, contact number) are required for mobile signup');
+        }
+
+        // Check if email already exists
+        const existingReferrer = await referrerRepository.findByEmail(email);
+        if (existingReferrer) {
+          throw new ConflictError('Email already exists');
+        }
+
+        referrer = await referrerRepository.create({
+          email,
+          phone_number: phoneNumber,
+          full_name,
+          company,
+          role,
+          linkedin,
+          contact_number,
+          password_hash: null, // No password for OTP users
+        });
+      } else {
+        // No signup data - user needs to signup
+        return { needsSignup: true, phoneNumber };
+      }
     }
 
     // Generate JWT token
@@ -209,6 +228,7 @@ class AuthService {
         id: referrer.id,
         email: referrer.email,
       },
+      needsSignup: false,
     };
   }
 }
