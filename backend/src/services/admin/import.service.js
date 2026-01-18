@@ -80,8 +80,10 @@ class ImportService {
         // Handle last_name_initial: accept either last_name (derive initial) or last_name_initial
         let last_name_initial = '';
         if (record.last_name_initial && record.last_name_initial.trim()) {
-          // Use last_name_initial directly if provided
-          last_name_initial = record.last_name_initial.trim();
+          const value = record.last_name_initial.trim();
+          // If it's more than 1 character, extract just the first character (uppercase)
+          // This allows CSV to have full names but store only initial for privacy
+          last_name_initial = value.charAt(0).toUpperCase();
         } else if (record.last_name && record.last_name.trim()) {
           // Derive initial from last_name (first character, uppercase)
           last_name_initial = record.last_name.trim().charAt(0).toUpperCase();
