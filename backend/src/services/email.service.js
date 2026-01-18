@@ -347,6 +347,40 @@ ${candidateList}
       throw error;
     }
   }
+
+  /**
+   * Notify previous owner that their phone was removed because it was verified by another account
+   */
+  async sendPhoneReassignedEmail(toEmail, toName, phoneNumber, requestId = null) {
+    const emailTransporter = getTransporter();
+    if (!emailTransporter) {
+      logger.warn(requestId, '[Email disabled] Cannot send phone reassigned notice');
+      return;
+    }
+    const subject = 'Your phone number was removed from your account';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Phone number removed</h2>
+        <p>Hello ${toName || 'User'},</p>
+        <p>The phone number <strong>${phoneNumber}</strong> was removed from your account because another user verified they have access to it (e.g. they have the SIM now).</p>
+        <p>If this wasn’t you, please secure your account: set a password or add another sign-in method from the login page.</p>
+        <p>Best regards,<br>Referral Discovery Portal</p>
+      </div>
+    `;
+    const text = `Hello ${toName || 'User'},\n\nThe phone number ${phoneNumber} was removed from your account because another user verified they have access to it.\n\nIf this wasn't you, please secure your account from the login page.\n\nBest regards,\nReferral Discovery Portal`;
+    try {
+      await emailTransporter.sendMail({
+        from: config.email.from,
+        to: toEmail,
+        subject,
+        text,
+        html,
+      });
+      logger.info(requestId, `[Email] Phone reassigned notice sent to ${toEmail}`);
+    } catch (err) {
+      logger.error(requestId, '[Email] Failed to send phone reassigned notice:', err.message);
+    }
+  }
 }
 
 module.exports = new EmailService();

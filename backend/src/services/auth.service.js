@@ -4,8 +4,10 @@
  */
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const prisma = require('../lib/prisma');
 const referrerRepository = require('../repositories/referrer.repository');
 const otpService = require('./otp.service');
+const emailService = require('./email.service');
 const { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } = require('../utils/errors');
 const config = require('../config/env');
 const logger = require('../utils/logger');
@@ -139,12 +141,53 @@ class AuthService {
         }
         data.phone_number = null;
       }
-      // Clear verification when phone number changes
+
+      // If the new number is already on another account: require OTP, then transfer it
+      if (data.phone_number) {
+        const other = await referrerRepository.findByPhoneNumber(data.phone_number);
+        if (other && other.id !== referrerId) {
+          if (data.phone_change_otp) {
+            const v = await otpService.verifyOTP(data.phone_number, data.phone_change_otp);
+            if (!v.valid) throw new BadRequestError(v.error || 'Invalid or expired OTP');
+            delete data.phone_change_otp;
+            data.phone_verified_at = new Date();
+            await prisma.$transaction([
+              prisma.referrer.update({
+                where: { id: other.id },
+                data: { phone_number: null, phone_verified_at: null },
+              }),
+              prisma.referrer.update({
+                where: { id: referrerId },
+                data,
+              }),
+            ]);
+            emailService.sendPhoneReassignedEmail(
+              other.email,
+              other.full_name || 'User',
+              data.phone_number
+            ).catch(() => {});
+            return this.getProfile(referrerId);
+          }
+          await otpService.sendOTP(data.phone_number);
+          const { phone_number, phone_change_otp, ...rest } = data;
+          if (Object.keys(rest).length > 0) {
+            await referrerRepository.update(referrerId, rest);
+          }
+          return {
+            needs_phone_otp: true,
+            pending_phone: data.phone_number,
+            message: 'This number is on another account. An OTP was sent. Enter it and save again to transfer it to your account.',
+          };
+        }
+      }
+
+      // Clear verification when phone number changes (normal case)
       if (data.phone_number !== ref.phone_number) {
         data.phone_verified_at = null;
       }
     }
-    
+
+    delete data.phone_change_otp;
     return referrerRepository.update(referrerId, data);
   }
 

@@ -26,6 +26,8 @@ const updateProfileSchema = z.object({
   role: z.string().max(MAX_LENGTHS.ROLE).optional(),
   linkedin: z.string().max(MAX_LENGTHS.LINKEDIN).optional(),
   phone_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
+  /** Required to take a number already on another account; sent after OTP verification. */
+  phone_change_otp: z.string().min(4).max(8).optional(),
 });
 
 const changePasswordSchema = z.object({

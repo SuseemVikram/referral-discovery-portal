@@ -49,6 +49,8 @@ export interface UpdateProfileRequest {
   role?: string;
   linkedin?: string;
   phone_number?: string;
+  /** Sent with OTP to take a number already on another account. */
+  phone_change_otp?: string;
 }
 
 export interface ChangePasswordRequest {

@@ -41,6 +41,8 @@ export default function AccountPage() {
   const [reverifyOtp, setReverifyOtp] = useState('');
   const [reverifyLoading, setReverifyLoading] = useState(false);
   const [reverifyError, setReverifyError] = useState<string | null>(null);
+  const [pendingPhoneTransfer, setPendingPhoneTransfer] = useState<{ pending_phone: string } | null>(null);
+  const [transferOtp, setTransferOtp] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -94,6 +96,8 @@ export default function AccountPage() {
         setPhoneIsPrimary(!!data.phone_is_primary);
         setServerPhoneNumber(data.phone_number || '');
         setPhoneVerified(!!data.phone_verified_at);
+        setPendingPhoneTransfer(null);
+        setTransferOtp('');
       } catch (err) {
         if (err instanceof Error && isAuthError(err)) {
           logout();
@@ -174,11 +178,21 @@ export default function AccountPage() {
       
       const profileData = {
         ...formData,
-        // fullPhoneNumber is always string ('' or number); backend treats '' as clear
         phone_number: fullPhoneNumber,
+        ...(pendingPhoneTransfer && transferOtp ? { phone_change_otp: transferOtp } : {}),
       };
-      
-      await authApi.updateProfile(profileData);
+
+      const result = await authApi.updateProfile(profileData);
+      if (result && typeof result === 'object' && 'needs_phone_otp' in result && result.needs_phone_otp) {
+        setPendingPhoneTransfer({ pending_phone: (result as { pending_phone: string }).pending_phone });
+        setError(null);
+        setSuccess(null);
+        setSaving(false);
+        return;
+      }
+
+      setPendingPhoneTransfer(null);
+      setTransferOtp('');
       await refreshUser();
       
       const updatedUser = await authApi.getProfile();
@@ -361,9 +375,31 @@ export default function AccountPage() {
                     className="input !pl-[130px]"
                   />
                 </div>
-                {(phoneIsPrimary || !!formData.phone_number.trim()) && (
-                  <div className="mt-2">
-                    {reverifyStep === 'idle' && (phoneVerified && !numberChanged ? (
+                {(phoneIsPrimary || !!formData.phone_number.trim() || pendingPhoneTransfer) && (
+                  <div className="mt-2 space-y-2">
+                    {pendingPhoneTransfer && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm text-slate-700">
+                          This number is on another account. Enter the OTP sent to {pendingPhoneTransfer.pending_phone}:
+                        </p>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="OTP"
+                          value={transferOtp}
+                          onChange={(e) => setTransferOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                          className="input !py-1.5 w-24"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { setPendingPhoneTransfer(null); setTransferOtp(''); setError(null); }}
+                          className="text-sm text-slate-500 hover:text-slate-700"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                    {reverifyStep === 'idle' && !pendingPhoneTransfer && (phoneVerified && !numberChanged ? (
                       <span className="text-sm text-green-600 font-medium">Verified</span>
                     ) : (
                       <button
@@ -387,7 +423,7 @@ export default function AccountPage() {
                         {reverifyLoading ? 'Sending…' : 'Re-verify number'}
                       </button>
                     ))}
-                    {reverifyStep === 'otp_sent' && (
+                    {reverifyStep === 'otp_sent' && !pendingPhoneTransfer && (
                       <div className="flex flex-wrap items-center gap-2">
                         <input
                           type="text"
@@ -429,7 +465,7 @@ export default function AccountPage() {
                         </button>
                       </div>
                     )}
-                    {reverifyStep === 'verified' && (
+                    {reverifyStep === 'verified' && !pendingPhoneTransfer && (
                       <span className="text-sm text-green-600 font-medium">Phone number verified</span>
                     )}
                     {reverifyError && (
