@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
@@ -11,7 +11,7 @@ import { COUNTRY_CODES, CountryCode } from '@/lib/constants/country-codes';
 
 type SignupMethod = 'email' | 'google' | 'otp';
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoggedIn, isLoading, refreshUser } = useAuth();
@@ -670,5 +670,17 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+        <div className="spinner mx-auto" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
