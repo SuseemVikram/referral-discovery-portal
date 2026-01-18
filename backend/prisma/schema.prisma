@@ -60,6 +60,7 @@ model Referrer {
   password_hash  String?
   google_id      String?  @unique @map("google_id")
   phone_number   String?  @unique @map("phone_number")
+  phone_verified_at DateTime? @map("phone_verified_at")
 
   is_admin       Boolean  @default(false)
 

@@ -39,6 +39,8 @@ export interface User {
   is_admin: boolean;
   /** True when user signed up with mobile (OTP) and has no password or Google — phone cannot be cleared. */
   phone_is_primary?: boolean;
+  /** Set when the current phone_number was verified via Re-verify OTP; cleared when the number is changed. */
+  phone_verified_at?: string | null;
 }
 
 export interface UpdateProfileRequest {

@@ -94,6 +94,7 @@ class AuthService {
       role: referrer.role,
       linkedin: referrer.linkedin,
       phone_number: referrer.phone_number,
+      phone_verified_at: referrer.phone_verified_at,
       is_admin: referrer.is_admin,
       createdAt: referrer.createdAt,
       phone_is_primary,
@@ -106,6 +107,7 @@ class AuthService {
   async updateProfile(referrerId, data) {
     // Handle phone_number: normalize if provided, or set to null if explicitly empty/undefined
     if (data.phone_number !== undefined) {
+      const ref = await referrerRepository.findById(referrerId, { includeAuthFlags: true });
       if (data.phone_number && data.phone_number.trim()) {
         let normalizedPhone = data.phone_number.trim().replace(/\s+/g, '');
         
@@ -129,7 +131,6 @@ class AuthService {
         }
       } else {
         // Trying to clear phone — block if it is the user's primary sign-in (mobile signup)
-        const ref = await referrerRepository.findById(referrerId, { includeAuthFlags: true });
         const phone_is_primary = !!(ref.phone_number && !ref.password_hash && !ref.google_id);
         if (phone_is_primary) {
           throw new BadRequestError(
@@ -137,6 +138,10 @@ class AuthService {
           );
         }
         data.phone_number = null;
+      }
+      // Clear verification when phone number changes
+      if (data.phone_number !== ref.phone_number) {
+        data.phone_verified_at = null;
       }
     }
     
@@ -250,6 +255,7 @@ class AuthService {
 
   /**
    * Verify OTP for the current user's phone (re-verification flow).
+   * Sets phone_verified_at on success.
    */
   async verifyPhoneOtp(referrerId, otp) {
     const referrer = await referrerRepository.findById(referrerId);
@@ -260,6 +266,7 @@ class AuthService {
     if (!result.valid) {
       throw new BadRequestError(result.error || 'Invalid or expired OTP');
     }
+    await referrerRepository.update(referrerId, { phone_verified_at: new Date() });
     return { success: true, message: 'Phone number verified' };
   }
 

@@ -35,6 +35,8 @@ export default function AccountPage() {
   const [countryCodeSearch, setCountryCodeSearch] = useState('');
   const countryCodeDropdownRef = useRef<HTMLDivElement>(null);
   const [phoneIsPrimary, setPhoneIsPrimary] = useState(false);
+  const [serverPhoneNumber, setServerPhoneNumber] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [reverifyStep, setReverifyStep] = useState<'idle' | 'otp_sent' | 'verified'>('idle');
   const [reverifyOtp, setReverifyOtp] = useState('');
   const [reverifyLoading, setReverifyLoading] = useState(false);
@@ -90,6 +92,8 @@ export default function AccountPage() {
           phone_number: phoneNumber,
         });
         setPhoneIsPrimary(!!data.phone_is_primary);
+        setServerPhoneNumber(data.phone_number || '');
+        setPhoneVerified(!!data.phone_verified_at);
       } catch (err) {
         if (err instanceof Error && isAuthError(err)) {
           logout();
@@ -178,6 +182,8 @@ export default function AccountPage() {
       await refreshUser();
       
       const updatedUser = await authApi.getProfile();
+      setServerPhoneNumber(updatedUser.phone_number || '');
+      setPhoneVerified(!!updatedUser.phone_verified_at);
       if (isProfileComplete(updatedUser)) {
         const { path, selectedIds } = getReturnPath();
         
@@ -206,6 +212,10 @@ export default function AccountPage() {
   const handleLogout = () => {
     logout();
   };
+
+  const rawPhone = formData.phone_number.trim().replace(/\s+/g, '');
+  const fullPhoneNumber = rawPhone ? selectedCountryCode.dialCode + rawPhone : '';
+  const numberChanged = fullPhoneNumber !== serverPhoneNumber;
 
   if (authLoading || loading) {
     return (
@@ -353,7 +363,9 @@ export default function AccountPage() {
                 </div>
                 {(phoneIsPrimary || !!formData.phone_number.trim()) && (
                   <div className="mt-2">
-                    {reverifyStep === 'idle' && (
+                    {reverifyStep === 'idle' && (phoneVerified && !numberChanged ? (
+                      <span className="text-sm text-green-600 font-medium">Verified</span>
+                    ) : (
                       <button
                         type="button"
                         onClick={async () => {
@@ -374,7 +386,7 @@ export default function AccountPage() {
                       >
                         {reverifyLoading ? 'Sending…' : 'Re-verify number'}
                       </button>
-                    )}
+                    ))}
                     {reverifyStep === 'otp_sent' && (
                       <div className="flex flex-wrap items-center gap-2">
                         <input
@@ -391,6 +403,9 @@ export default function AccountPage() {
                             setReverifyLoading(true);
                             try {
                               await authApi.verifyPhoneOtp(reverifyOtp);
+                              const data = await authApi.getProfile();
+                              setServerPhoneNumber(data.phone_number || '');
+                              setPhoneVerified(!!data.phone_verified_at);
                               setReverifyStep('verified');
                               setReverifyOtp('');
                               setTimeout(() => setReverifyStep('idle'), 2000);

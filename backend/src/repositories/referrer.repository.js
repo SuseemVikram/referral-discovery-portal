@@ -17,6 +17,7 @@ class ReferrerRepository {
       role: true,
       linkedin: true,
       phone_number: true,
+      phone_verified_at: true,
       is_admin: true,
       createdAt: true,
     };
@@ -143,6 +144,7 @@ class ReferrerRepository {
         role: true,
         linkedin: true,
         phone_number: true,
+        phone_verified_at: true,
         is_admin: true,
       },
     });
