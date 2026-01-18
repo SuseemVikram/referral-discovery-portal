@@ -412,7 +412,7 @@ export default async function HomePage() {
                 </div>
                 <div className="text-xs text-slate-500 mb-3">
                   <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">4 YOE</span>
-                  <span className="mx-1">•</span> Remote OK
+                  <span className="mx-1">•</span> Open to Remote
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded-md">Python</span>

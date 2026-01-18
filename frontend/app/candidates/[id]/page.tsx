@@ -88,7 +88,7 @@ export default async function CandidateProfilePage({
                   {candidate.remote_ok && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <span className="text-sm text-emerald-600 font-medium">Remote OK</span>
+                      <span className="text-sm text-emerald-600 font-medium">Open to Remote</span>
                     </>
                   )}
                 </div>
