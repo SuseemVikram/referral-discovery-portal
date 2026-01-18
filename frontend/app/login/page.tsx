@@ -79,7 +79,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/candidates' });
+      await signIn('google', { callbackUrl: '/login' });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Google sign-in failed';
       setError(errorMessage);

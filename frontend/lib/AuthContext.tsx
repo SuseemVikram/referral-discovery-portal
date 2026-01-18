@@ -157,16 +157,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profileComplete = isProfileComplete(userData);
         const currentPath = window.location.pathname;
         
-        if (currentPath === '/login' || currentPath === '/signup') {
-          if (!profileComplete) {
+        if (!profileComplete) {
+          if (currentPath !== '/account') {
             router.push('/account');
-          } else {
-            router.push('/candidates');
           }
-        } else if (currentPath !== '/candidates' && currentPath !== '/account') {
-          if (!profileComplete) {
-            router.push('/account');
-          } else {
+        } else {
+          if (currentPath === '/login' || currentPath === '/signup' || currentPath === '/account') {
             router.push('/candidates');
           }
         }
