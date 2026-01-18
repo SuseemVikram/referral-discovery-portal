@@ -65,13 +65,14 @@ export default function AccountPage() {
         // Parse phone_number to extract country code and phone number
         let phoneNumber = '';
         let countryCode = COUNTRY_CODES.find(c => c.code === 'IN') || COUNTRY_CODES[0];
-        if (data.phone_number) {
-          const countryMatch = COUNTRY_CODES.find(c => data.phone_number.startsWith(c.dialCode));
+        const phoneNumberValue = data.phone_number;
+        if (phoneNumberValue) {
+          const countryMatch = COUNTRY_CODES.find(c => phoneNumberValue.startsWith(c.dialCode));
           if (countryMatch) {
             countryCode = countryMatch;
-            phoneNumber = data.phone_number.replace(countryMatch.dialCode, '');
+            phoneNumber = phoneNumberValue.replace(countryMatch.dialCode, '');
           } else {
-            phoneNumber = data.phone_number;
+            phoneNumber = phoneNumberValue;
           }
         }
         
