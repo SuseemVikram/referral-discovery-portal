@@ -184,7 +184,8 @@ export default function AccountPage() {
 
       const result = await authApi.updateProfile(profileData);
       if (result && typeof result === 'object' && 'needs_phone_otp' in result && result.needs_phone_otp) {
-        setPendingPhoneTransfer({ pending_phone: (result as { pending_phone: string }).pending_phone });
+        const r = result as unknown as { pending_phone: string };
+        setPendingPhoneTransfer({ pending_phone: r.pending_phone });
         setError(null);
         setSuccess(null);
         setSaving(false);
