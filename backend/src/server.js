@@ -222,18 +222,18 @@ const PORT = config.app.port;
 // Email verification must NEVER block server startup - email is a side-effect, not core infrastructure
 verifyTransporter()
   .then((status) => {
-    if (status.success) {
+  if (status.success) {
       logger.info('[Email] Email service verified and ready');
-    } else {
+  } else {
       logger.warn('[Email] Email service verification skipped:', status.error);
       logger.warn('[Email] Server continues to run - emails may not be sent until email is properly configured');
-    }
+  }
   })
   .catch((error) => {
     // Log as warning, not error - don't let email verification failures crash the server
     logger.warn('[Email] Email verification failed (server continues running):', error.message);
     logger.warn('[Email] Server is operational - configure email to enable email sending');
-  });
+});
 
 // Start server - email verification does not block this
 app.listen(PORT, () => {
