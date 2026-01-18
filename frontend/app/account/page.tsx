@@ -158,7 +158,8 @@ export default function AccountPage() {
       
       const profileData = {
         ...formData,
-        phone_number: fullPhoneNumber || null, // Send null explicitly to clear phone number
+        // fullPhoneNumber is always string ('' or number); backend treats '' as clear
+        phone_number: fullPhoneNumber,
       };
       
       await authApi.updateProfile(profileData);
