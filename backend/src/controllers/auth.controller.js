@@ -81,6 +81,36 @@ class AuthController {
   }
 
   /**
+   * POST /auth/me/send-verify-phone-otp
+   * Send OTP to current user's phone for re-verification
+   */
+  async sendVerifyPhoneOtp(req, res, next) {
+    try {
+      const result = await authService.sendVerifyPhoneOtp(req.user.id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /auth/me/verify-phone-otp
+   * Verify OTP for current user's phone (re-verification)
+   */
+  async verifyPhoneOtp(req, res, next) {
+    try {
+      const { otp } = req.body;
+      if (!otp || typeof otp !== 'string' || !otp.trim()) {
+        return res.status(400).json({ error: 'OTP is required' });
+      }
+      const result = await authService.verifyPhoneOtp(req.user.id, otp.trim());
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * PUT /auth/me/password
    * Change password
    */

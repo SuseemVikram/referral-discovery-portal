@@ -34,6 +34,11 @@ export default function AccountPage() {
   const [countryCodeDropdownOpen, setCountryCodeDropdownOpen] = useState(false);
   const [countryCodeSearch, setCountryCodeSearch] = useState('');
   const countryCodeDropdownRef = useRef<HTMLDivElement>(null);
+  const [phoneIsPrimary, setPhoneIsPrimary] = useState(false);
+  const [reverifyStep, setReverifyStep] = useState<'idle' | 'otp_sent' | 'verified'>('idle');
+  const [reverifyOtp, setReverifyOtp] = useState('');
+  const [reverifyLoading, setReverifyLoading] = useState(false);
+  const [reverifyError, setReverifyError] = useState<string | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -84,6 +89,7 @@ export default function AccountPage() {
           linkedin: data.linkedin || '',
           phone_number: phoneNumber,
         });
+        setPhoneIsPrimary(!!data.phone_is_primary);
       } catch (err) {
         if (err instanceof Error && isAuthError(err)) {
           logout();
@@ -155,6 +161,12 @@ export default function AccountPage() {
       // Combine country code with phone number
       const phoneNumber = formData.phone_number.trim().replace(/\s+/g, '');
       const fullPhoneNumber = phoneNumber ? selectedCountryCode.dialCode + phoneNumber : '';
+
+      if (phoneIsPrimary && !fullPhoneNumber) {
+        setError('Phone number is required — it is your primary sign-in method. Add a password or link Google first to remove it.');
+        setSaving(false);
+        return;
+      }
       
       const profileData = {
         ...formData,
@@ -276,7 +288,12 @@ export default function AccountPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-slate-700">Phone Number</label>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <label className="block text-sm font-medium text-slate-700">Phone Number</label>
+                  {phoneIsPrimary && (
+                    <span className="text-xs text-amber-700">Required — your sign-in method</span>
+                  )}
+                </div>
                 <div className="relative overflow-visible" ref={countryCodeDropdownRef}>
                   <button
                     type="button"
@@ -334,6 +351,77 @@ export default function AccountPage() {
                     className="input !pl-[130px]"
                   />
                 </div>
+                {(phoneIsPrimary || !!formData.phone_number.trim()) && (
+                  <div className="mt-2">
+                    {reverifyStep === 'idle' && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setReverifyError(null);
+                          setReverifyLoading(true);
+                          try {
+                            await authApi.sendVerifyPhoneOtp();
+                            setReverifyStep('otp_sent');
+                            setReverifyOtp('');
+                          } catch (err) {
+                            setReverifyError(err instanceof Error ? err.message : 'Failed to send OTP');
+                          } finally {
+                            setReverifyLoading(false);
+                          }
+                        }}
+                        disabled={reverifyLoading}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                      >
+                        {reverifyLoading ? 'Sending…' : 'Re-verify number'}
+                      </button>
+                    )}
+                    {reverifyStep === 'otp_sent' && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Enter OTP"
+                          value={reverifyOtp}
+                          onChange={(e) => setReverifyOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          className="input !py-1.5 w-24"
+                        />
+                        <button
+                          onClick={async () => {
+                            setReverifyError(null);
+                            setReverifyLoading(true);
+                            try {
+                              await authApi.verifyPhoneOtp(reverifyOtp);
+                              setReverifyStep('verified');
+                              setReverifyOtp('');
+                              setTimeout(() => setReverifyStep('idle'), 2000);
+                            } catch (err) {
+                              setReverifyError(err instanceof Error ? err.message : 'Invalid or expired OTP');
+                            } finally {
+                              setReverifyLoading(false);
+                            }
+                          }}
+                          disabled={reverifyLoading || reverifyOtp.length < 4}
+                          className="btn btn-secondary !py-1.5 !px-3 text-sm"
+                        >
+                          {reverifyLoading ? 'Verifying…' : 'Verify'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setReverifyStep('idle'); setReverifyOtp(''); setReverifyError(null); }}
+                          className="text-sm text-slate-500 hover:text-slate-700"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                    {reverifyStep === 'verified' && (
+                      <span className="text-sm text-green-600 font-medium">Phone number verified</span>
+                    )}
+                    {reverifyError && (
+                      <p className="text-sm text-red-600 mt-1">{reverifyError}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>

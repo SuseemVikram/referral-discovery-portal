@@ -5,7 +5,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const referrerRepository = require('../repositories/referrer.repository');
-const { ConflictError, UnauthorizedError, NotFoundError } = require('../utils/errors');
+const otpService = require('./otp.service');
+const { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } = require('../utils/errors');
 const config = require('../config/env');
 const logger = require('../utils/logger');
 
@@ -76,9 +77,27 @@ class AuthService {
 
   /**
    * Get referrer profile
+   * Includes phone_is_primary: true when user signed up with mobile (no password, no Google) and has phone.
    */
   async getProfile(referrerId) {
-    return referrerRepository.findById(referrerId);
+    const referrer = await referrerRepository.findById(referrerId, { includeAuthFlags: true });
+    const phone_is_primary = !!(
+      referrer.phone_number &&
+      !referrer.password_hash &&
+      !referrer.google_id
+    );
+    return {
+      id: referrer.id,
+      email: referrer.email,
+      full_name: referrer.full_name,
+      company: referrer.company,
+      role: referrer.role,
+      linkedin: referrer.linkedin,
+      phone_number: referrer.phone_number,
+      is_admin: referrer.is_admin,
+      createdAt: referrer.createdAt,
+      phone_is_primary,
+    };
   }
 
   /**
@@ -109,7 +128,14 @@ class AuthService {
           data.phone_number = null;
         }
       } else {
-        // Empty or undefined - explicitly set to null to clear it
+        // Trying to clear phone — block if it is the user's primary sign-in (mobile signup)
+        const ref = await referrerRepository.findById(referrerId, { includeAuthFlags: true });
+        const phone_is_primary = !!(ref.phone_number && !ref.password_hash && !ref.google_id);
+        if (phone_is_primary) {
+          throw new BadRequestError(
+            'Phone number cannot be removed because it is your primary sign-in method. Add a password or link Google first.'
+          );
+        }
         data.phone_number = null;
       }
     }
@@ -207,6 +233,34 @@ class AuthService {
         email: referrer.email,
       },
     };
+  }
+
+  /**
+   * Send OTP to the current user's phone for re-verification.
+   * User must be logged in and have a phone number.
+   */
+  async sendVerifyPhoneOtp(referrerId) {
+    const referrer = await referrerRepository.findById(referrerId);
+    if (!referrer.phone_number || !referrer.phone_number.trim()) {
+      throw new BadRequestError('No phone number on your account.');
+    }
+    await otpService.sendOTP(referrer.phone_number);
+    return { success: true, message: 'OTP sent to your phone' };
+  }
+
+  /**
+   * Verify OTP for the current user's phone (re-verification flow).
+   */
+  async verifyPhoneOtp(referrerId, otp) {
+    const referrer = await referrerRepository.findById(referrerId);
+    if (!referrer.phone_number || !referrer.phone_number.trim()) {
+      throw new BadRequestError('No phone number on your account.');
+    }
+    const result = await otpService.verifyOTP(referrer.phone_number, otp);
+    if (!result.valid) {
+      throw new BadRequestError(result.error || 'Invalid or expired OTP');
+    }
+    return { success: true, message: 'Phone number verified' };
   }
 
   /**

@@ -17,6 +17,7 @@ interface User {
   linkedin: string;
   phone_number: string | null;
   is_admin: boolean;
+  phone_is_primary?: boolean;
 }
 
 interface SessionWithToken {

@@ -4,8 +4,11 @@ const { NotFoundError } = require('../utils/errors');
 class ReferrerRepository {
   /**
    * Find referrer by ID
+   * @param {string} id
+   * @param {object} [opts] - { includePassword, includeAuthFlags }
    */
-  async findById(id, includePassword = false) {
+  async findById(id, opts = {}) {
+    const { includePassword = false, includeAuthFlags = false } = typeof opts === 'boolean' ? { includePassword: opts } : opts;
     const select = {
       id: true,
       email: true,
@@ -20,6 +23,10 @@ class ReferrerRepository {
 
     if (includePassword) {
       select.password_hash = true;
+    }
+    if (includeAuthFlags) {
+      select.password_hash = true;
+      select.google_id = true;
     }
 
     const referrer = await prisma.referrer.findUnique({
@@ -36,6 +43,7 @@ class ReferrerRepository {
 
   /**
    * Find referrer by email
+   * @param {boolean} [includePassword=false]
    */
   async findByEmail(email, includePassword = false) {
     const select = {

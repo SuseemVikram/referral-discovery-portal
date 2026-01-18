@@ -40,6 +40,13 @@ class ForbiddenError extends AppError {
   }
 }
 
+class BadRequestError extends AppError {
+  constructor(message = 'Bad request') {
+    super(message, 400);
+    this.name = 'BadRequestError';
+  }
+}
+
 class ConflictError extends AppError {
   constructor(message = 'Resource conflict') {
     super(message, 409);
@@ -60,6 +67,7 @@ module.exports = {
   NotFoundError,
   UnauthorizedError,
   ForbiddenError,
+  BadRequestError,
   ConflictError,
   RateLimitError,
 };

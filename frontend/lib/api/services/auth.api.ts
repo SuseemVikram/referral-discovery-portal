@@ -37,6 +37,8 @@ export interface User {
   linkedin: string;
   phone_number?: string;
   is_admin: boolean;
+  /** True when user signed up with mobile (OTP) and has no password or Google — phone cannot be cleared. */
+  phone_is_primary?: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -109,6 +111,20 @@ export const authApi = {
    */
   verifyOTP: async (phone_number: string, otp: string, signup_data?: any): Promise<AuthResponse> => {
     return apiClient.post<AuthResponse>('/auth/otp/verify', { phone_number, otp, signup_data });
+  },
+
+  /**
+   * Send OTP to current user's phone for re-verification
+   */
+  sendVerifyPhoneOtp: async (): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>('/auth/me/send-verify-phone-otp');
+  },
+
+  /**
+   * Verify OTP for current user's phone (re-verification)
+   */
+  verifyPhoneOtp: async (otp: string): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>('/auth/me/verify-phone-otp', { otp });
   },
 };
 
