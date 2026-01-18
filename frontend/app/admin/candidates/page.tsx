@@ -151,11 +151,11 @@ export default function AdminCandidatesPage() {
   const hasFilters = emailSearch.trim() || selectedRoles.length > 0 || selectedSkills.length > 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="page-header">
+        <div className="page-header flex-col sm:flex-row gap-3 sm:gap-0">
           <h1 className="page-title">Candidate Management</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <span className="text-sm text-slate-500">
             {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}
           </span>
@@ -172,20 +172,20 @@ export default function AdminCandidatesPage() {
         </div>
 
         {/* Filters Section */}
-        <div className="card p-5 mb-6">
+        <div className="card p-4 sm:p-5 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-900">Filters</h2>
             {hasFilters && (
               <button
                 onClick={handleClearFilters}
-                className="text-sm text-slate-500 hover:text-orange-600 transition-colors"
+                className="text-sm text-slate-500 hover:text-orange-600 transition-colors min-h-[44px] px-2 -mr-2"
               >
                 Clear all
               </button>
             )}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
                 Search by Email
@@ -292,7 +292,7 @@ export default function AdminCandidatesPage() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="table">
+            <table className="table min-w-[640px]">
               <thead>
                 <tr>
                   <th>Name</th>

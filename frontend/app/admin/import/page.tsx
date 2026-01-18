@@ -98,13 +98,13 @@ export default function AdminImportPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
         <h1 className="page-title mb-6">Import Candidates</h1>
         
         {/* Sample CSV Section */}
-        <div className="card p-6 mb-6">
-          <div className="flex items-start justify-between gap-4">
+        <div className="card p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 mb-1">Need a template?</h2>
               <p className="text-sm text-slate-500">Download a sample CSV with the correct format and example data.</p>
@@ -177,9 +177,9 @@ export default function AdminImportPage() {
           )}
 
           {summary && (
-            <div className="mt-6 p-5 bg-emerald-50 border border-emerald-100 rounded-xl">
+            <div className="mt-6 p-4 sm:p-5 bg-emerald-50 border border-emerald-100 rounded-xl">
               <h3 className="font-semibold text-emerald-800 mb-4">Import Complete</h3>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-slate-900">{summary.total}</div>
                   <div className="text-xs text-slate-500 mt-1">Total</div>
@@ -217,7 +217,7 @@ export default function AdminImportPage() {
             <div className="text-slate-600"><code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">candidate_email</code> Email</div>
           </div>
           <h3 className="text-sm font-semibold text-slate-900 mt-5 mb-3">Optional Columns</h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
             <div className="text-slate-600"><code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">project1_title</code> Project name</div>
             <div className="text-slate-600"><code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">project1_bullets</code> Pipe-separated (|)</div>
             <div className="text-slate-600"><code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">project2_title</code> Project name</div>

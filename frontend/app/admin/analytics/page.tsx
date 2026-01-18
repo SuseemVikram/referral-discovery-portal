@@ -99,7 +99,7 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="page-title mb-6">Analytics</h1>
           <div className="card">
@@ -115,7 +115,7 @@ export default function AdminAnalyticsPage() {
 
   if (error) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="page-title mb-6">Analytics</h1>
           <div className="alert alert-error">{error}</div>
@@ -131,18 +131,18 @@ export default function AdminAnalyticsPage() {
   const maxTrendCount = Math.max(...data.eoiTrend.map((t) => t.count), 1);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="page-header">
+        <div className="page-header flex-col sm:flex-row gap-3 sm:gap-0">
           <h1 className="page-title">Analytics</h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-slate-500">Time Range:</span>
               <select
                 value={dateRange}
                 onChange={(e) => handleDateRangeChange(e.target.value)}
-                className="input !w-auto !py-2"
+                className="input !w-auto !py-2 min-w-[140px]"
               >
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -174,26 +174,26 @@ export default function AdminAnalyticsPage() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <p className="text-sm text-slate-500 mb-1">Total EOIs</p>
-            <p className="text-3xl font-bold text-slate-900">{data.summary.totalEOIs.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900">{data.summary.totalEOIs.toLocaleString()}</p>
           </div>
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <p className="text-sm text-slate-500 mb-1">Total Candidates</p>
-            <p className="text-3xl font-bold text-slate-900">{data.summary.totalCandidates.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900">{data.summary.totalCandidates.toLocaleString()}</p>
           </div>
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <p className="text-sm text-slate-500 mb-1">Active Referrers</p>
-            <p className="text-3xl font-bold text-slate-900">{data.summary.totalReferrers.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900">{data.summary.totalReferrers.toLocaleString()}</p>
           </div>
-          <div className="card p-5">
+          <div className="card p-4 sm:p-5">
             <p className="text-sm text-slate-500 mb-1">EOIs ({data.summary.periodDays}d)</p>
             <p className="text-3xl font-bold text-slate-900">{data.summary.periodEOIs.toLocaleString()}</p>
           </div>
         </div>
 
         {/* EOI Trend Chart */}
-        <div className="card p-6 mb-8">
+        <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
           <h2 className="text-base font-semibold text-slate-900 mb-4">EOI Activity Trend</h2>
           <div className="h-48 flex items-end gap-1">
             {data.eoiTrend.map((day, idx) => {
@@ -251,7 +251,7 @@ export default function AdminAnalyticsPage() {
           </div>
 
           {/* Top Roles */}
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <h2 className="text-base font-semibold text-slate-900 mb-4">Top Roles in Demand</h2>
             {data.topRoles.length === 0 ? (
               <p className="text-slate-500 text-sm">No data available</p>
@@ -277,27 +277,27 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Most Demanded Candidates */}
-        <div className="card p-6 mb-8">
+        <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
           <h2 className="text-base font-semibold text-slate-900 mb-4">Most Demanded Candidates</h2>
           {data.topCandidates.length === 0 ? (
             <p className="text-slate-500 text-sm">No EOI data available</p>
           ) : (
-            <div className="overflow-x-auto -mx-6">
-              <table className="table">
+            <div className="overflow-x-auto -mx-4 sm:-mx-6">
+              <table className="table min-w-[520px]">
                 <thead>
                   <tr>
-                    <th className="pl-6">Rank</th>
+                    <th className="pl-4 sm:pl-6">Rank</th>
                     <th>Candidate</th>
                     <th>Roles</th>
                     <th>Skills</th>
                     <th className="text-center">Status</th>
-                    <th className="text-center pr-6">EOIs</th>
+                    <th className="text-center pr-4 sm:pr-6">EOIs</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.topCandidates.map((candidate, idx) => (
                     <tr key={candidate.id}>
-                      <td className="pl-6">
+                      <td className="pl-4 sm:pl-6">
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium bg-slate-100 text-slate-700">
                           {idx + 1}
                         </span>
@@ -337,7 +337,7 @@ export default function AdminAnalyticsPage() {
                           {candidate.availability}
                         </span>
                       </td>
-                      <td className="text-center pr-6">
+                      <td className="text-center pr-4 sm:pr-6">
                         <span className="font-semibold text-slate-900">{candidate.eoiCount}</span>
                       </td>
                     </tr>
@@ -349,7 +349,7 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Top Referrers */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="text-base font-semibold text-slate-900 mb-4">Most Active Referrers</h2>
           {data.topReferrers.length === 0 ? (
             <p className="text-slate-500 text-sm">No referrer data available</p>

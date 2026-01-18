@@ -62,7 +62,7 @@ export default function ReferrerDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
           <div className="card">
             <div className="empty-state">
@@ -76,7 +76,7 @@ export default function ReferrerDetailPage() {
 
   if (error || !referrer) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
           <Link
             href="/admin/referrers"
@@ -94,11 +94,11 @@ export default function ReferrerDetailPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         <Link
           href="/admin/referrers"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6 min-h-[44px] items-center"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -107,17 +107,17 @@ export default function ReferrerDetailPage() {
         </Link>
 
         <div className="card overflow-hidden">
-          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-semibold text-slate-900">{referrer.full_name}</h1>
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">{referrer.full_name}</h1>
               {referrer.is_admin && (
                 <span className="badge badge-orange !px-3 !py-1.5">Admin</span>
               )}
             </div>
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
                   Email

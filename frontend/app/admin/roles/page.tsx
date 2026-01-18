@@ -100,7 +100,7 @@ export default function AdminRolesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-xl mx-auto">
           <h1 className="page-title mb-6">Admin Roles</h1>
           <div className="card">
@@ -115,7 +115,7 @@ export default function AdminRolesPage() {
 
   if (error) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-xl mx-auto">
           <h1 className="page-title mb-6">Admin Roles</h1>
           <div className="alert alert-error">{error}</div>
@@ -125,26 +125,26 @@ export default function AdminRolesPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-xl mx-auto">
         <h1 className="page-title mb-6">Admin Roles</h1>
 
         {/* Add Admin Form */}
-        <div className="card p-6 mb-6">
+        <div className="card p-4 sm:p-6 mb-6">
           <h2 className="text-base font-semibold text-slate-900 mb-4">Add New Admin</h2>
-          <form onSubmit={handleAddAdmin} className="flex gap-3">
+          <form onSubmit={handleAddAdmin} className="flex flex-col sm:flex-row gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter referrer email address"
-              className="input flex-1"
+              className="input flex-1 min-w-0"
               disabled={adding}
             />
             <button
               type="submit"
               disabled={adding}
-              className="btn btn-primary"
+              className="btn btn-primary w-full sm:w-auto"
             >
               {adding ? (
                 <>
@@ -168,7 +168,7 @@ export default function AdminRolesPage() {
         </div>
 
         {/* Current Admins List */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-slate-900">Current Admins</h2>
             <span className="badge badge-blue !px-3 !py-1">

@@ -51,7 +51,7 @@ export default function AdminReferrersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="page-title mb-6">Referrers</h1>
           <div className="card">
@@ -66,7 +66,7 @@ export default function AdminReferrersPage() {
 
   if (error) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="page-title mb-6">Referrers</h1>
           <div className="alert alert-error">{error}</div>
@@ -78,11 +78,11 @@ export default function AdminReferrersPage() {
   const totalEOIs = referrers.reduce((sum, r) => sum + r.eoiCount, 0);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="page-header">
+        <div className="page-header flex-col sm:flex-row gap-2 sm:gap-0">
           <h1 className="page-title">Referrers</h1>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <span className="badge badge-blue !px-3 !py-1.5">
               {referrers.length} Total
             </span>
@@ -106,7 +106,7 @@ export default function AdminReferrersPage() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="table">
+            <table className="table min-w-[600px]">
               <thead>
                 <tr>
                   <th>Name</th>

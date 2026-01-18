@@ -76,7 +76,7 @@ export default function AdminEOIPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="page-title mb-6">EOI Logs</h1>
           <div className="card">
@@ -91,7 +91,7 @@ export default function AdminEOIPage() {
 
   if (error) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="page-title mb-6">EOI Logs</h1>
           <div className="alert alert-error">{error}</div>
@@ -101,9 +101,9 @@ export default function AdminEOIPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="page-header">
+        <div className="page-header flex-col sm:flex-row gap-3 sm:gap-0">
           <h1 className="page-title">EOI Logs</h1>
           {logs.length > 0 && (
             <button
@@ -142,7 +142,7 @@ export default function AdminEOIPage() {
           </div>
         ) : (
           <div className="table-container">
-            <table className="table">
+            <table className="table min-w-[560px]">
               <thead>
                 <tr>
                   <th>Date</th>
