@@ -195,10 +195,10 @@ app.set('etag', true);
 app.use('/api/candidates', candidatesRouter);
 
 // Auth routes with differentiated rate limiting
-// /auth/me (GET) gets lenient rate limiting, other auth endpoints get strict rate limiting
+// /auth/me (GET and PUT) gets lenient rate limiting, other auth endpoints get strict rate limiting
 app.use('/auth', (req, res, next) => {
-  // Apply lenient rate limiting for GET /auth/me
-  if (req.method === 'GET' && req.path === '/me') {
+  // Apply lenient rate limiting for GET /auth/me (profile fetch) and PUT /auth/me (profile update)
+  if (req.path === '/me' && (req.method === 'GET' || req.method === 'PUT')) {
     return authProfileLimiter(req, res, next);
   }
   // Apply strict rate limiting for all other auth endpoints (login, signup, etc.)
