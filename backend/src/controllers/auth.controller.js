@@ -189,8 +189,15 @@ class AuthController {
         });
       }
 
-      // For signup flow: allow sending OTP even if phone doesn't exist
+      // For signup flow: allow sending OTP only if phone does NOT already have an account
       if (for_signup) {
+        const existingReferrer = await referrerRepository.findByPhoneNumber(phone_number);
+        if (existingReferrer) {
+          return res.status(409).json({
+            error: 'This number is already registered. Please sign in instead.',
+            alreadyRegistered: true,
+          });
+        }
         await otpService.sendOTP(phone_number);
         return res.json({ success: true, message: 'OTP sent successfully' });
       }

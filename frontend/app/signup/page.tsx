@@ -16,8 +16,9 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const { login, isLoggedIn, isLoading, refreshUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Get phone from URL if redirected from login
   const phoneFromUrl = searchParams.get('phone');
   const methodFromUrl = searchParams.get('method') as SignupMethod | null;
@@ -89,6 +90,7 @@ function SignupForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'phone_number') setAlreadyRegistered(false);
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -203,10 +205,17 @@ function SignupForm() {
         toast.success('Account created successfully!');
         router.push('/candidates');
       }, 300);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'OTP verification failed';
-      setError(errorMessage);
-      toast.error(errorMessage);
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : 'OTP verification failed';
+      const isAlreadyReg = status === 409 || String(msg).toLowerCase().includes('already registered');
+      if (isAlreadyReg) {
+        setError('This number is already registered. Please sign in instead.');
+        setAlreadyRegistered(true);
+      } else {
+        setError(msg);
+      }
+      toast.error(isAlreadyReg ? 'Number already registered' : msg);
     } finally {
       setLoading(false);
     }
@@ -238,6 +247,13 @@ function SignupForm() {
           {error && (
             <div className="alert alert-error mb-6">
               {error}
+              {alreadyRegistered && (
+                <p className="mt-3">
+                  <Link href="/login" className="font-medium text-orange-600 hover:text-orange-700 underline">
+                    Sign in instead
+                  </Link>
+                </p>
+              )}
             </div>
           )}
 
@@ -245,7 +261,7 @@ function SignupForm() {
           <div className="flex gap-2 mb-6 p-1 bg-slate-100 rounded-lg">
             <button
               type="button"
-              onClick={() => setMethod('email')}
+              onClick={() => { setMethod('email'); setError(null); setAlreadyRegistered(false); }}
               className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
                 method === 'email'
                   ? 'bg-white text-slate-900 shadow-sm'
@@ -267,7 +283,7 @@ function SignupForm() {
             </button>
             <button
               type="button"
-              onClick={() => setMethod('otp')}
+              onClick={() => { setMethod('otp'); setError(null); setAlreadyRegistered(false); }}
               className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
                 method === 'otp'
                   ? 'bg-white text-slate-900 shadow-sm'

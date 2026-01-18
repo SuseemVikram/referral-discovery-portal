@@ -319,7 +319,12 @@ class AuthService {
   async mobileOTPAuth(phoneNumber, signupData = null) {
     // Check if user exists by phone_number
     let referrer = await referrerRepository.findByPhoneNumber(phoneNumber);
-    
+
+    // Signup attempted with a number that already has an account — reject and tell them to login
+    if (referrer && signupData) {
+      throw new ConflictError('This number is already registered. Please sign in instead.');
+    }
+
     if (!referrer) {
       // If signupData is provided, create user with all details (mobile signup)
       if (signupData) {
