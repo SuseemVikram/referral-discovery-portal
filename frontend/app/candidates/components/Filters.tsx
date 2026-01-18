@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRolesAndSkills } from '@/lib/hooks/useRolesAndSkills';
 
 interface FiltersProps {
   filters: {
@@ -17,32 +18,8 @@ interface FiltersProps {
   }) => void;
 }
 
-const AVAILABLE_ROLES = [
-  'Senior Software Engineer',
-  'Tech Lead',
-  'Backend Engineer',
-  'DevOps Engineer',
-  'Frontend Engineer',
-  'UI/UX Developer',
-];
-
-const AVAILABLE_SKILLS = [
-  'TypeScript',
-  'React',
-  'Node.js',
-  'PostgreSQL',
-  'Python',
-  'Django',
-  'AWS',
-  'Docker',
-  'Kubernetes',
-  'JavaScript',
-  'Vue.js',
-  'CSS',
-  'Figma',
-];
-
 export default function Filters({ filters, onChange }: FiltersProps) {
+  const { roles: AVAILABLE_ROLES, skills: AVAILABLE_SKILLS } = useRolesAndSkills();
   const [expandedSections, setExpandedSections] = useState({
     roles: true,
     skills: false,

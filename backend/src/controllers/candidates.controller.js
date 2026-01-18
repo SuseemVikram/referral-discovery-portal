@@ -75,6 +75,20 @@ class CandidatesController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/candidates/metadata/filters
+   * Get unique roles and skills from active candidates for filter options
+   */
+  async getFilterMetadata(req, res, next) {
+    try {
+      const metadata = await candidateService.getUniqueRolesAndSkills();
+      res.set('Cache-Control', 'public, max-age=300');
+      res.json(metadata);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new CandidatesController();

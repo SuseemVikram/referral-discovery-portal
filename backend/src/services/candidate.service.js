@@ -18,6 +18,13 @@ class CandidateService {
   async getCandidateById(id) {
     return candidateRepository.findById(id);
   }
+
+  /**
+   * Get unique roles and skills from active candidates
+   */
+  async getUniqueRolesAndSkills() {
+    return candidateRepository.getUniqueRolesAndSkills();
+  }
 }
 
 module.exports = new CandidateService();

@@ -86,5 +86,14 @@ export const candidatesApi = {
       cache: 'no-store',
     });
   },
+
+  /**
+   * Get unique roles and skills from active candidates for filter options
+   */
+  getFilterMetadata: async (): Promise<{ roles: string[]; skills: string[] }> => {
+    return apiClient.get<{ roles: string[]; skills: string[] }>(API_ENDPOINTS.candidatesFilterMetadata, {
+      cache: 'default',
+    });
+  },
 };
 

@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { adminApi } from '@/lib/api/services/admin.api';
 import AdminVisibilityToggle from '../components/AdminVisibilityToggle';
 import AdminAvailabilitySelect from '../components/AdminAvailabilitySelect';
+import { useRolesAndSkills } from '@/lib/hooks/useRolesAndSkills';
 
 interface Candidate {
   id: string;
@@ -19,34 +20,6 @@ interface Candidate {
   is_active: boolean;
 }
 
-const COMMON_ROLES = [
-  'Frontend Developer',
-  'Backend Developer',
-  'Full Stack Developer',
-  'DevOps Engineer',
-  'Data Engineer',
-  'Product Manager',
-  'UI/UX Designer',
-  'QA Engineer',
-  'Mobile Developer',
-  'Data Scientist',
-];
-
-const COMMON_SKILLS = [
-  'React',
-  'Node.js',
-  'TypeScript',
-  'Python',
-  'Java',
-  'AWS',
-  'Docker',
-  'PostgreSQL',
-  'MongoDB',
-  'Go',
-  'Kubernetes',
-  'GraphQL',
-];
-
 export default function AdminCandidatesPage() {
   const router = useRouter();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -58,6 +31,7 @@ export default function AdminCandidatesPage() {
   const [deletingAll, setDeletingAll] = useState(false);
 
   const { isLoggedIn } = useAuth();
+  const { roles: COMMON_ROLES, skills: COMMON_SKILLS } = useRolesAndSkills();
 
   const loadCandidates = useCallback(async () => {
     if (!isLoggedIn) {

@@ -281,6 +281,38 @@ class CandidateRepository {
     const result = await prisma.candidate.deleteMany({});
     return { count: result.count };
   }
+
+  /**
+   * Get unique roles and skills from active candidates
+   */
+  async getUniqueRolesAndSkills() {
+    const candidates = await prisma.candidate.findMany({
+      where: {
+        is_active: true,
+      },
+      select: {
+        target_roles: true,
+        primary_skills: true,
+      },
+    });
+
+    const rolesSet = new Set();
+    const skillsSet = new Set();
+
+    candidates.forEach((candidate) => {
+      if (candidate.target_roles) {
+        candidate.target_roles.forEach((role) => rolesSet.add(role));
+      }
+      if (candidate.primary_skills) {
+        candidate.primary_skills.forEach((skill) => skillsSet.add(skill));
+      }
+    });
+
+    return {
+      roles: Array.from(rolesSet).sort(),
+      skills: Array.from(skillsSet).sort(),
+    };
+  }
 }
 
 module.exports = new CandidateRepository();

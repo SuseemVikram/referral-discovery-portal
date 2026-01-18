@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
 
   // Public
   candidates: '/api/candidates',
+  candidatesFilterMetadata: '/api/candidates/metadata/filters',
 
   // Protected
   eoi: '/api/eoi',
