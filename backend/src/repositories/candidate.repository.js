@@ -86,38 +86,36 @@ class CandidateRepository {
       where.remote_ok = remote_ok === 'true';
     }
 
-    // Optimize: Only count if needed, use cursor-based pagination for better performance
-    // Optimize: Fetch candidates first, only count if we got results
-    const candidates = await prisma.candidate.findMany({
-      where,
-      skip,
-      take,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      select: {
-        id: true,
-        first_name: true,
-        last_name_initial: true,
-        target_roles: true,
-        primary_skills: true,
-        location: true,
-        remote_ok: true,
-        cohort: true,
-        short_profile: true,
-        projects: true, // Keep projects but we'll optimize it separately
-        availability_status: true,
-      },
-    });
+    const [candidates, countResult] = await Promise.all([
+      prisma.candidate.findMany({
+        where,
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          id: true,
+          first_name: true,
+          last_name_initial: true,
+          target_roles: true,
+          primary_skills: true,
+          location: true,
+          remote_ok: true,
+          cohort: true,
+          short_profile: true,
+          projects: true,
+          availability_status: true,
+        },
+      }),
+      page === 1 ? prisma.candidate.count({ where }) : Promise.resolve(null),
+    ]);
 
-    // Only count if needed for pagination (on first page or when we have results)
-    let totalCount = 0;
-    if (page === 1 || candidates.length === take) {
-      // Use optimized count - only count active candidates
-      totalCount = await prisma.candidate.count({ where });
-    } else {
-      // Estimate count for subsequent pages
+    let totalCount = countResult;
+    if (!totalCount && (candidates.length === take || page > 1)) {
       totalCount = (page - 1) * take + candidates.length;
+    } else if (!totalCount) {
+      totalCount = candidates.length;
     }
 
     return {
