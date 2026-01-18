@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
@@ -14,9 +14,23 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: "#f97316",
+};
+
 export const metadata: Metadata = {
   title: "Referral Discovery Portal",
   description: "Browse candidates and send expressions of interest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Referral",
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased min-h-[100vh] min-h-[100dvh]`}>
         <ErrorBoundary>
           <Providers>
             <AuthProvider>
@@ -35,6 +49,7 @@ export default function RootLayout({
               <Footer />
               <Toaster
                 position="bottom-center"
+                containerStyle={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
                 toastOptions={{
                   duration: 4000,
                   style: {
@@ -42,9 +57,9 @@ export default function RootLayout({
                     color: '#333',
                     borderRadius: '9999px',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
-                    padding: '6px 16px',
-                    fontSize: '12px',
-                    maxWidth: '280px',
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    maxWidth: 'min(320px, calc(100vw - 32px))',
                   },
                   success: {
                     iconTheme: {

@@ -13,8 +13,8 @@ export default function Footer() {
     : 'pt-8 pb-6';
   
   return (
-    <footer className={`bg-[#0a0a12] text-[#6a6a7a] ${paddingClasses}`}>
-      <div className="max-w-7xl mx-auto px-6">
+    <footer className={`bg-[#0a0a12] text-[#6a6a7a] ${paddingClasses} pb-[env(safe-area-inset-bottom,0px)]`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-1">

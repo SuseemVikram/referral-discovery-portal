@@ -215,7 +215,7 @@ function SignupForm() {
   // Show loading state while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6">
         <div className="spinner mx-auto" />
       </div>
     );
@@ -227,9 +227,9 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-lg">
-        <div className="card p-8">
+        <div className="card p-4 sm:p-6 md:p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-slate-900">Create your account</h1>
             <p className="text-slate-500 mt-2">Start connecting with top candidates</p>
@@ -321,7 +321,7 @@ function SignupForm() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-2 text-sm font-medium text-slate-700">Company</label>
                   <input
@@ -448,13 +448,13 @@ function SignupForm() {
                 <label className="block mb-2 text-sm font-medium text-slate-700">
                   Phone Number
                 </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1 overflow-visible" ref={countryCodeDropdownRef}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1 overflow-visible min-w-0" ref={countryCodeDropdownRef}>
                     <button
                       type="button"
                       onClick={() => setCountryCodeDropdownOpen(!countryCodeDropdownOpen)}
                       disabled={otpSent}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm text-slate-700 hover:text-slate-900 z-[11] bg-white px-2.5 py-1.5 rounded-md border border-slate-300 pointer-events-auto"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm text-slate-700 hover:text-slate-900 z-[11] bg-white px-2.5 py-1.5 rounded-md border border-slate-300 pointer-events-auto min-h-[44px]"
                     >
                       <span className="whitespace-nowrap">{selectedCountryCode.dialCode}</span>
                       <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -462,7 +462,7 @@ function SignupForm() {
                       </svg>
                     </button>
                     {countryCodeDropdownOpen && (
-                      <div className="absolute left-0 top-full mt-1 w-full sm:w-80 bg-white border border-slate-300 rounded-lg shadow-xl z-[100] max-h-96 overflow-hidden flex flex-col">
+                      <div className="absolute left-0 top-full mt-1 w-full min-w-[200px] sm:w-80 bg-white border border-slate-300 rounded-lg shadow-xl z-[100] max-h-[70vh] sm:max-h-96 overflow-hidden flex flex-col">
                         <div className="p-2 border-b border-slate-200">
                           <input
                             type="text"
@@ -504,7 +504,7 @@ function SignupForm() {
                       value={formData.phone_number}
                       onChange={handleChange}
                       required
-                      className="input flex-1 !pl-[130px]"
+                      className="input flex-1 !pl-[110px] sm:!pl-[130px]"
                       placeholder="1234567890"
                       disabled={otpSent}
                     />
@@ -514,7 +514,7 @@ function SignupForm() {
                       type="button"
                       onClick={handleRequestOTP}
                       disabled={sendingOTP}
-                      className="btn btn-secondary px-4 whitespace-nowrap"
+                      className="btn btn-secondary px-4 whitespace-nowrap w-full sm:w-auto"
                     >
                       {sendingOTP ? (
                         <div className="spinner !w-4 !h-4" />
@@ -662,7 +662,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6">
         <div className="spinner mx-auto" />
       </div>
     }>

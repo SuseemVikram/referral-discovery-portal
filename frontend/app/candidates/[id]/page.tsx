@@ -25,7 +25,7 @@ export default async function CandidateProfilePage({
 
   if (!candidate) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] p-6">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           <Link 
             href="/candidates"
@@ -56,7 +56,7 @@ export default async function CandidateProfilePage({
   const projectsArray = Array.isArray(projects) ? projects : projects?.title ? [projects] : [];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] p-6">
+    <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6">
       <div className="max-w-3xl mx-auto">
         {/* Back Link */}
         <Link 

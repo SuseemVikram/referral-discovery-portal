@@ -45,6 +45,9 @@
 /* ===== BASE STYLES ===== */
 html {
   scroll-behavior: smooth;
+  /* Safari: avoid 100vh including dynamic UI; dvh + fallbacks */
+  min-height: 100%;
+  min-height: -webkit-fill-available;
 }
 
 body {
@@ -54,6 +57,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+  /* Mobile: reduce tap delay and control highlight */
+  -webkit-tap-highlight-color: rgba(249, 115, 22, 0.15);
+  touch-action: manipulation;
 }
 
 /* Override Tailwind font-sans to use Inter */
@@ -143,13 +149,14 @@ textarea::placeholder {
   border-color: #cbd5e1;
 }
 
-/* Button base */
+/* Button base - min 44px height for touch */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 1rem;
+  min-height: 44px;
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: var(--radius-lg);
@@ -190,15 +197,22 @@ textarea::placeholder {
   background-color: #fecaca;
 }
 
-/* Input base */
+/* Input base - 16px on mobile to prevent iOS zoom on focus */
 .input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 16px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   background-color: var(--bg-card);
   color: var(--text-primary);
+}
+
+@media (min-width: 640px) {
+  .input {
+    font-size: 0.875rem;
+    padding: 0.625rem 0.875rem;
+  }
 }
 
 .input:focus {
@@ -335,6 +349,15 @@ textarea::placeholder {
   background-color: var(--color-success-light);
   border: 1px solid #a7f3d0;
   color: #047857;
+}
+
+/* Safe area for fixed bottom bars (notch, home indicator) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Empty state */

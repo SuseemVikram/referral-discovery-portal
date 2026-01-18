@@ -19,6 +19,7 @@ export default function CandidatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<{
     roles: string[];
     skills: string[];
@@ -223,19 +224,31 @@ export default function CandidatesPage() {
 
   return (
     <>
-      <div className="min-h-[calc(100vh-4rem)] p-6 pb-28">
+      <div className="min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] p-4 sm:p-6 pb-32 sm:pb-28">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
-          <div className="page-header">
-            <h1 className="page-title">Browse Candidates</h1>
+          <div className="page-header flex-col sm:flex-row gap-2 sm:gap-0">
+            <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+              <h1 className="page-title">Browse Candidates</h1>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className="md:hidden btn btn-secondary !min-h-[40px] !py-2 px-3 text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+              </button>
+            </div>
             <span className="text-sm text-slate-500">
               {loading ? '...' : pagination ? `Showing ${allCandidates.length} of ${pagination.total}` : `${allCandidates.length} candidates`}
             </span>
           </div>
 
-          <div className="flex gap-6">
-            {/* Sidebar Filters */}
-            <div className="w-72 flex-shrink-0">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-4">
+            {/* Sidebar Filters - desktop */}
+            <div className="hidden md:block w-72 flex-shrink-0">
               <Filters 
                 filters={filters} 
                 onChange={handleFiltersChange} 
@@ -243,7 +256,7 @@ export default function CandidatesPage() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {loading ? (
                 <div className="card">
                   <div className="empty-state">
@@ -458,23 +471,40 @@ export default function CandidatesPage() {
         </div>
       </div>
 
+      {/* Mobile Filters sheet */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-2xl max-h-[85dvh] overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white flex items-center justify-between px-4 py-3 border-b border-slate-100 z-10">
+              <span className="text-base font-semibold text-slate-900">Filters</span>
+              <button type="button" onClick={() => setFiltersOpen(false)} className="p-2 -mr-2 rounded-lg text-slate-600 hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                Done
+              </button>
+            </div>
+            <div className="p-4">
+              <Filters filters={filters} onChange={handleFiltersChange} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Selection Action Bar */}
       {selectedCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-orange-700">{selectedCount}</span>
                 </div>
                 <span className="font-medium text-slate-900">
                   candidate{selectedCount !== 1 ? 's' : ''} selected
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Floating Notification - Only show when logged in */}
+              <div className="flex items-center gap-2 flex-wrap">
                 {isLoggedIn && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full">
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full">
                     <svg className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -483,7 +513,7 @@ export default function CandidatesPage() {
                     </p>
                   </div>
                 )}
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
                   <button
                     onClick={handleClearAll}
                     disabled={sending}
