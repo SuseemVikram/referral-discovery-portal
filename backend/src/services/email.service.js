@@ -33,7 +33,7 @@ class EmailService {
     // Log email attempt
     logger.info(requestId, `[Email] Attempting to send EOI email to: ${candidateEmail}`);
 
-    const subject = `Referral interest from ${referrerName} at ${referrerCompany}`;
+    const subject = `${referrerName} from ${referrerCompany} - Referral Opportunity`;
 
     // Opening message for referral introduction
     const openingMessage = `You are being referred for an opportunity at ${referrerCompany}.`;
@@ -199,12 +199,23 @@ Referral Discovery Portal
     `;
 
     try {
+      const fromEmail = config.email.from.includes('<') 
+        ? config.email.from.match(/<(.+?)>/)?.[1] || config.email.from
+        : config.email.from;
+      const fromDomain = fromEmail.split('@')[1] || 'referral-portal.com';
+      
       const info = await emailTransporter.sendMail({
         from: config.email.from,
+        replyTo: referrerEmail,
         to: candidateEmail,
         subject: subject,
         text: text,
         html: html,
+        headers: {
+          'Message-ID': `<${Date.now()}-${Math.random().toString(36).substring(7)}@${fromDomain}>`,
+          'X-Mailer': 'Referral Discovery Portal',
+          'X-Priority': '1',
+        },
       });
 
       logger.info(requestId, `[Email] Successfully sent EOI email to ${candidateEmail}`, {

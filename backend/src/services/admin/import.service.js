@@ -140,6 +140,7 @@ class ImportService {
           availability_status,
           short_profile: record.short_profile,
           projects: projects,
+          cohort: record.cohort && record.cohort.trim() ? record.cohort.trim() : null,
         };
 
         // Check if candidate exists before upsert
