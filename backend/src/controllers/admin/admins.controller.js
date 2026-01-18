@@ -18,7 +18,7 @@ class AdminsController {
     try {
       const validatedData = addAdminSchema.parse(req.body);
       const admin = await adminsService.addAdminByEmail(validatedData.email);
-      res.json(admin);
+      res.json({ admin });
     } catch (error) {
       next(error);
     }

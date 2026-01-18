@@ -67,11 +67,13 @@ export default function AdminRolesPage() {
 
     try {
       const data = await adminApi.addAdmin(email.trim());
-      setAddSuccess(`Successfully made ${data.admin.email} an admin`);
+      const adminEmail = data?.admin?.email || email.trim();
+      setAddSuccess(`Successfully made ${adminEmail} an admin`);
       setEmail('');
       loadAdmins();
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Failed to add admin');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add admin';
+      setAddError(errorMessage);
     } finally {
       setAdding(false);
     }
