@@ -83,7 +83,7 @@ class CandidatesController {
   async getFilterMetadata(req, res, next) {
     try {
       const metadata = await candidateService.getUniqueRolesAndSkills();
-      res.set('Cache-Control', 'public, max-age=300');
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(metadata);
     } catch (error) {
       next(error);

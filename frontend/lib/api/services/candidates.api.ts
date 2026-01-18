@@ -92,7 +92,7 @@ export const candidatesApi = {
    */
   getFilterMetadata: async (): Promise<{ roles: string[]; skills: string[] }> => {
     return apiClient.get<{ roles: string[]; skills: string[] }>(API_ENDPOINTS.candidatesFilterMetadata, {
-      cache: 'default',
+      cache: 'no-store',
     });
   },
 };

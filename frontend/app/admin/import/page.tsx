@@ -84,6 +84,8 @@ export default function AdminImportPage() {
       setFile(null);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+      
+      toast.success(`Successfully imported ${result.created} candidate(s). Refresh the candidates page to see updated filters.`);
     } catch (err) {
       if (err instanceof Error && ((err as any).status === 401 || (err as any).status === 403)) {
         router.push('/login');

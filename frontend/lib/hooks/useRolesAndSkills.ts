@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { candidatesApi } from '../api/services/candidates.api';
 
 export function useRolesAndSkills() {
@@ -6,21 +6,22 @@ export function useRolesAndSkills() {
   const [skills, setSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    candidatesApi.getFilterMetadata()
-      .then((metadata) => {
-        setRoles(metadata.roles.sort());
-        setSkills(metadata.skills.sort());
-      })
-      .catch(() => {
-        // Empty arrays if API fails - no candidates means no filters
-        setRoles([]);
-        setSkills([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+  const fetchMetadata = useCallback(async () => {
+    try {
+      const metadata = await candidatesApi.getFilterMetadata();
+      setRoles(metadata.roles.sort());
+      setSkills(metadata.skills.sort());
+    } catch () {
+      setRoles([]);
+      setSkills([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { roles, skills, loading };
+  useEffect(() => {
+    fetchMetadata();
+  }, [fetchMetadata]);
+
+  return { roles, skills, loading, refetch: fetchMetadata };
 }
