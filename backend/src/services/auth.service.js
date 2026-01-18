@@ -85,6 +85,31 @@ class AuthService {
    * Update referrer profile
    */
   async updateProfile(referrerId, data) {
+    // Get current referrer to check if phone_number is already set
+    const currentReferrer = await referrerRepository.findById(referrerId);
+    
+    // If contact_number is being updated and phone_number is not set, sync them
+    if (data.contact_number && !currentReferrer.phone_number) {
+      let normalizedPhone = data.contact_number.trim().replace(/\s+/g, '');
+      
+      // Normalize to E.164 format: ensure it starts with +
+      if (normalizedPhone && !normalizedPhone.startsWith('+')) {
+        // If it's a 10-digit number (likely Indian), add +91
+        if (/^\d{10}$/.test(normalizedPhone)) {
+          normalizedPhone = '+91' + normalizedPhone;
+        } else {
+          // For other formats, just prepend +
+          normalizedPhone = '+' + normalizedPhone;
+        }
+      }
+      
+      // Only set phone_number if contact_number is valid E.164 format
+      if (/^\+[1-9]\d{1,14}$/.test(normalizedPhone)) {
+        data.phone_number = normalizedPhone;
+        data.contact_number = normalizedPhone; // Also normalize contact_number
+      }
+    }
+    
     return referrerRepository.update(referrerId, data);
   }
 
