@@ -29,7 +29,6 @@ function SignupForm() {
     company: '',
     role: '',
     linkedin: '',
-    contact_number: '',
     consent: false,
     phone_number: '',
     otp: '',
@@ -109,7 +108,6 @@ function SignupForm() {
         company: formData.company,
         role: formData.role,
         linkedin: formData.linkedin,
-        contact_number: formData.contact_number || undefined,
         consent: formData.consent,
       });
 
@@ -173,7 +171,7 @@ function SignupForm() {
       const phoneNumber = formData.phone_number.trim().replace(/\s+/g, '');
       const fullPhoneNumber = selectedCountryCode.dialCode + phoneNumber;
       
-      // For mobile signup, all fields are required (except contact_number - we use phone number)
+      // For mobile signup, all fields are required
       if (!formData.email || !formData.full_name || !formData.company || 
           !formData.role || !formData.linkedin) {
         setError('All fields (email, name, company, role, LinkedIn) are required for mobile signup');
@@ -183,14 +181,14 @@ function SignupForm() {
       }
 
       // Prepare signup data for mobile signup
-      // Use the phone number as contact_number since they signed up with mobile
+      // Phone number will be saved via phone_number field
       const signupData = {
         email: formData.email.trim(),
         full_name: formData.full_name.trim(),
         company: formData.company.trim(),
         role: formData.role.trim(),
         linkedin: formData.linkedin.trim(),
-        contact_number: fullPhoneNumber, // Use the verified phone number as contact number
+        phone_number: fullPhoneNumber,
       };
 
       const result = await authApi.verifyOTP(fullPhoneNumber, formData.otp, signupData);
@@ -362,18 +360,6 @@ function SignupForm() {
                 />
               </div>
 
-              <div>
-                <label className="block mb-2 text-sm font-medium text-slate-700">Contact Number</label>
-                <input
-                  type="tel"
-                  name="contact_number"
-                  value={formData.contact_number}
-                  onChange={handleChange}
-                  className="input"
-                  placeholder="+91 12345 67890 (optional)"
-                />
-              </div>
-              
               <div className="pt-1">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input

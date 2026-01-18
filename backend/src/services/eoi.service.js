@@ -25,10 +25,10 @@ class EOIService {
       throw new NotFoundError('Referrer');
     }
 
-    if (!referrer.company || !referrer.role || !referrer.linkedin || !referrer.contact_number ||
+    if (!referrer.company || !referrer.role || !referrer.linkedin || !referrer.phone_number ||
         referrer.company.trim() === '' || referrer.role.trim() === '' || 
-        referrer.linkedin.trim() === '' || referrer.contact_number.trim() === '') {
-      throw new Error('Please complete your profile (company, role, LinkedIn, and contact number are required) before sending interest to candidates.');
+        referrer.linkedin.trim() === '' || referrer.phone_number.trim() === '') {
+      throw new Error('Please complete your profile (company, role, LinkedIn, and phone number are required) before sending interest to candidates.');
     }
 
     // Get candidates first (outside transaction)
@@ -121,7 +121,7 @@ class EOIService {
           referrer.email,
           referrer.role,
           referrer.linkedin,
-          referrer.contact_number,
+          referrer.phone_number,
           emailRoles,
           emailSkills,
           null // requestId not available in service layer

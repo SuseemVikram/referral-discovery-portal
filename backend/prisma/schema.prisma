@@ -55,7 +55,6 @@ model Referrer {
   company        String?
   role           String?
   linkedin       String?
-  contact_number String?
   consent        Boolean  @default(false)
 
   password_hash  String?

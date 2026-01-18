@@ -9,7 +9,7 @@ const signupSchema = z.object({
   company: z.string().max(MAX_LENGTHS.COMPANY),
   role: z.string().max(MAX_LENGTHS.ROLE),
   linkedin: z.string().max(MAX_LENGTHS.LINKEDIN).optional(),
-  contact_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
+  phone_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
   consent: z.boolean().refine((val) => val === true, {
     message: 'Consent must be true',
   }),
@@ -25,7 +25,7 @@ const updateProfileSchema = z.object({
   company: z.string().max(MAX_LENGTHS.COMPANY).optional(),
   role: z.string().max(MAX_LENGTHS.ROLE).optional(),
   linkedin: z.string().max(MAX_LENGTHS.LINKEDIN).optional(),
-  contact_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
+  phone_number: z.string().max(MAX_LENGTHS.CONTACT_NUMBER).optional(),
 });
 
 const changePasswordSchema = z.object({

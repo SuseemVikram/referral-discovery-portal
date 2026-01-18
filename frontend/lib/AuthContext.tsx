@@ -15,7 +15,7 @@ interface User {
   company: string;
   role: string;
   linkedin: string;
-  contact_number: string | null;
+  phone_number: string | null;
   is_admin: boolean;
 }
 

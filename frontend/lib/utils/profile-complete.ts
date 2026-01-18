@@ -2,7 +2,7 @@ export interface UserProfile {
   company?: string | null;
   role?: string | null;
   linkedin?: string | null;
-  contact_number?: string | null;
+  phone_number?: string | null;
 }
 
 export function isProfileComplete(user: UserProfile | null | undefined): boolean {
@@ -11,9 +11,9 @@ export function isProfileComplete(user: UserProfile | null | undefined): boolean
   const company = user.company?.trim() || '';
   const role = user.role?.trim() || '';
   const linkedin = user.linkedin?.trim() || '';
-  const contact_number = user.contact_number?.trim() || '';
+  const phone_number = user.phone_number?.trim() || '';
   
-  return !!(company && role && linkedin && contact_number);
+  return !!(company && role && linkedin && phone_number);
 }
 
 export const RETURN_PATH_KEY = 'profile_return_path';

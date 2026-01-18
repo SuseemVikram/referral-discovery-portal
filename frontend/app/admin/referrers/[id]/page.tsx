@@ -14,7 +14,7 @@ interface ReferrerDetail {
   company: string;
   role: string;
   linkedin: string | null;
-  contact_number: string | null;
+  phone_number: string | null;
   is_admin: boolean;
   createdAt: string;
   updatedAt: string;
@@ -141,9 +141,9 @@ export default function ReferrerDetailPage() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Contact Number
+                  Phone Number
                 </label>
-                <p className="text-slate-900">{referrer.contact_number || '-'}</p>
+                <p className="text-slate-900">{referrer.phone_number || '-'}</p>
               </div>
 
               <div>

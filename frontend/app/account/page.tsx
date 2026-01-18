@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { authApi } from '@/lib/api/services/auth.api';
 import { isAuthError } from '@/lib/types/errors';
 import { isProfileComplete, getReturnPath, clearReturnPath } from '@/lib/utils/profile-complete';
+import { COUNTRY_CODES, CountryCode } from '@/lib/constants/country-codes';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function AccountPage() {
     company: '',
     role: '',
     linkedin: '',
-    contact_number: '',
+    phone_number: '',
   });
   const [passwordData, setPasswordData] = useState({
     current_password: '',
@@ -29,6 +30,24 @@ export default function AccountPage() {
   });
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState<CountryCode>(COUNTRY_CODES.find(c => c.code === 'IN') || COUNTRY_CODES[0]);
+  const [countryCodeDropdownOpen, setCountryCodeDropdownOpen] = useState(false);
+  const [countryCodeSearch, setCountryCodeSearch] = useState('');
+  const countryCodeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (countryCodeDropdownRef.current && !countryCodeDropdownRef.current.contains(event.target as Node)) {
+        setCountryCodeDropdownOpen(false);
+      }
+    }
+    if (countryCodeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [countryCodeDropdownOpen]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -42,12 +61,27 @@ export default function AccountPage() {
       try {
         const data = await authApi.getProfile();
         setUserEmail(data.email || '');
+        
+        // Parse phone_number to extract country code and phone number
+        let phoneNumber = '';
+        let countryCode = COUNTRY_CODES.find(c => c.code === 'IN') || COUNTRY_CODES[0];
+        if (data.phone_number) {
+          const countryMatch = COUNTRY_CODES.find(c => data.phone_number.startsWith(c.dialCode));
+          if (countryMatch) {
+            countryCode = countryMatch;
+            phoneNumber = data.phone_number.replace(countryMatch.dialCode, '');
+          } else {
+            phoneNumber = data.phone_number;
+          }
+        }
+        
+        setSelectedCountryCode(countryCode);
         setFormData({
           full_name: data.full_name || '',
           company: data.company || '',
           role: data.role || '',
           linkedin: data.linkedin || '',
-          contact_number: data.contact_number || '',
+          phone_number: phoneNumber,
         });
       } catch (err) {
         if (err instanceof Error && isAuthError(err)) {
@@ -117,7 +151,16 @@ export default function AccountPage() {
     setSaving(true);
 
     try {
-      await authApi.updateProfile(formData);
+      // Combine country code with phone number
+      const phoneNumber = formData.phone_number.trim().replace(/\s+/g, '');
+      const fullPhoneNumber = phoneNumber ? selectedCountryCode.dialCode + phoneNumber : '';
+      
+      const profileData = {
+        ...formData,
+        phone_number: fullPhoneNumber || undefined,
+      };
+      
+      await authApi.updateProfile(profileData);
       await refreshUser();
       
       const updatedUser = await authApi.getProfile();
@@ -231,15 +274,64 @@ export default function AccountPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-slate-700">Contact Number</label>
-                <input
-                  type="tel"
-                  name="contact_number"
-                  value={formData.contact_number}
-                  onChange={handleChange}
-                  placeholder="+91 12345 67890"
-                  className="input"
-                />
+                <label className="block mb-2 text-sm font-medium text-slate-700">Phone Number</label>
+                <div className="relative overflow-visible" ref={countryCodeDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setCountryCodeDropdownOpen(!countryCodeDropdownOpen)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm text-slate-700 hover:text-slate-900 z-[11] bg-white px-2.5 py-1.5 rounded-md border border-slate-300 pointer-events-auto"
+                  >
+                    <span className="whitespace-nowrap">{selectedCountryCode.dialCode}</span>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {countryCodeDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-full sm:w-80 bg-white border border-slate-300 rounded-lg shadow-xl z-[100] max-h-96 overflow-hidden flex flex-col">
+                      <div className="p-2 border-b border-slate-200">
+                        <input
+                          type="text"
+                          placeholder="Search country..."
+                          value={countryCodeSearch}
+                          onChange={(e) => setCountryCodeSearch(e.target.value)}
+                          className="input !py-2 w-full"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto max-h-80">
+                        {COUNTRY_CODES.filter((country) =>
+                          country.name.toLowerCase().includes(countryCodeSearch.toLowerCase()) ||
+                          country.dialCode.includes(countryCodeSearch) ||
+                          country.code.toLowerCase().includes(countryCodeSearch.toLowerCase())
+                        ).map((country) => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCountryCode(country);
+                              setCountryCodeDropdownOpen(false);
+                              setCountryCodeSearch('');
+                            }}
+                            className={`w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                              selectedCountryCode.code === country.code ? 'bg-slate-100' : ''
+                            }`}
+                          >
+                            <span className="text-sm text-slate-700">{country.name}</span>
+                            <span className="text-sm font-medium text-slate-900">{country.dialCode}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    type="tel"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    placeholder="1234567890"
+                    className="input !pl-[130px]"
+                  />
+                </div>
               </div>
 
               <div>

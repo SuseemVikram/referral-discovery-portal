@@ -85,12 +85,9 @@ class AuthService {
    * Update referrer profile
    */
   async updateProfile(referrerId, data) {
-    // Get current referrer to check if phone_number is already set
-    const currentReferrer = await referrerRepository.findById(referrerId);
-    
-    // If contact_number is being updated and phone_number is not set, sync them
-    if (data.contact_number && !currentReferrer.phone_number) {
-      let normalizedPhone = data.contact_number.trim().replace(/\s+/g, '');
+    // Normalize phone_number to E.164 format if provided
+    if (data.phone_number) {
+      let normalizedPhone = data.phone_number.trim().replace(/\s+/g, '');
       
       // Normalize to E.164 format: ensure it starts with +
       if (normalizedPhone && !normalizedPhone.startsWith('+')) {
@@ -103,10 +100,9 @@ class AuthService {
         }
       }
       
-      // Only set phone_number if contact_number is valid E.164 format
+      // Only update if valid E.164 format
       if (/^\+[1-9]\d{1,14}$/.test(normalizedPhone)) {
         data.phone_number = normalizedPhone;
-        data.contact_number = normalizedPhone; // Also normalize contact_number
       }
     }
     
@@ -215,11 +211,11 @@ class AuthService {
     if (!referrer) {
       // If signupData is provided, create user with all details (mobile signup)
       if (signupData) {
-        const { email, full_name, company, role, linkedin, contact_number } = signupData;
+        const { email, full_name, company, role, linkedin } = signupData;
         
         // Validate required fields for mobile signup
-        if (!email || !full_name || !company || !role || !linkedin || !contact_number) {
-          throw new Error('All fields (email, name, company, role, LinkedIn, contact number) are required for mobile signup');
+        if (!email || !full_name || !company || !role || !linkedin) {
+          throw new Error('All fields (email, name, company, role, LinkedIn) are required for mobile signup');
         }
 
         // Check if email already exists
@@ -235,7 +231,6 @@ class AuthService {
           company,
           role,
           linkedin,
-          contact_number,
           password_hash: null, // No password for OTP users
         });
       } else {

@@ -16,7 +16,7 @@ export interface SignupRequest {
   company: string;
   role: string;
   linkedin: string;
-  contact_number?: string;
+  phone_number?: string;
   consent: boolean;
 }
 
@@ -35,7 +35,7 @@ export interface User {
   company: string;
   role: string;
   linkedin: string;
-  contact_number?: string;
+  phone_number?: string;
   is_admin: boolean;
 }
 
@@ -44,7 +44,7 @@ export interface UpdateProfileRequest {
   company?: string;
   role?: string;
   linkedin?: string;
-  contact_number?: string;
+  phone_number?: string;
 }
 
 export interface ChangePasswordRequest {
